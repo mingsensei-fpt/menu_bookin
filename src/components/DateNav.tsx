@@ -1,15 +1,17 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, addDays, subDays } from "date-fns";
+import { ReactNode } from "react";
 
 interface DateNavProps {
   date: Date;
   onDateChange: (date: Date) => void;
   view: "calendar" | "timeline";
   onViewChange: (view: "calendar" | "timeline") => void;
+  children?: ReactNode;
 }
 
-export function DateNav({ date, onDateChange, view, onViewChange }: DateNavProps) {
+export function DateNav({ date, onDateChange, view, onViewChange, children }: DateNavProps) {
   return (
     <div className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-card px-3 py-2">
       <div className="flex items-center gap-1">
