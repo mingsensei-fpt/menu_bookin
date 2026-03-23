@@ -19,7 +19,17 @@ interface TimelineViewProps {
   onBookingClick: (booking: Booking) => void;
 }
 
-function BookingBlock({ booking, onClick }: { booking: Booking; onClick: () => void }) {
+function BookingBlock({
+  booking,
+  onClick,
+  isFirst,
+  spanCount,
+}: {
+  booking: Booking;
+  onClick: () => void;
+  isFirst: boolean;
+  spanCount: number;
+}) {
   const left = getBookingLeft(booking.start_time);
   const width = getBookingWidth(booking.start_time, booking.end_time);
 
@@ -29,16 +39,34 @@ function BookingBlock({ booking, onClick }: { booking: Booking; onClick: () => v
     conflict: "bg-booking-conflict text-booking-conflict-foreground",
   };
 
+  // Multi-table: span across rows visually
+  const height = spanCount * ROW_HEIGHT - 8; // -8 for top/bottom margins
+
   return (
     <button
       onClick={onClick}
-      className={`absolute top-1 bottom-1 rounded-lg px-2 py-1 text-left shadow-sm transition-transform active:scale-[0.98] overflow-hidden ${statusClasses[booking.status]}`}
-      style={{ left, width: Math.max(width, SLOT_WIDTH) }}
+      className={`absolute rounded-lg px-2 py-1 text-left shadow-sm transition-transform active:scale-[0.98] overflow-hidden ${statusClasses[booking.status]} ${!isFirst ? "pointer-events-none opacity-0" : ""}`}
+      style={{
+        left,
+        width: Math.max(width, SLOT_WIDTH),
+        top: 4,
+        height: isFirst ? height : ROW_HEIGHT - 8,
+        zIndex: isFirst ? 5 : 0,
+      }}
     >
-      <div className="truncate text-xs font-semibold leading-tight">{booking.customer_name}</div>
-      <div className="truncate text-[10px] opacity-90">
-        {booking.number_of_people} pax · {booking.start_time}–{booking.end_time}
-      </div>
+      {isFirst && (
+        <>
+          <div className="truncate text-xs font-semibold leading-tight">{booking.customer_name}</div>
+          <div className="truncate text-[10px] opacity-90">
+            {booking.number_of_people} pax · {booking.start_time}–{booking.end_time}
+          </div>
+          {booking.table_ids.length > 1 && (
+            <div className="truncate text-[10px] opacity-75">
+              {booking.table_ids.join(", ")}
+            </div>
+          )}
+        </>
+      )}
     </button>
   );
 }
@@ -47,7 +75,6 @@ export function TimelineView({ date, bookings, onBookingClick }: TimelineViewPro
   const scrollRef = useRef<HTMLDivElement>(null);
   const totalWidth = TIME_SLOTS.length * SLOT_WIDTH;
 
-  // Highlight current time
   const now = new Date();
   const isToday = format(now, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
   const nowMins = now.getHours() * 60 + now.getMinutes();
@@ -56,7 +83,6 @@ export function TimelineView({ date, bookings, onBookingClick }: TimelineViewPro
     ? ((nowMins - timeToMinutes("17:00")) / 30) * SLOT_WIDTH
     : 0;
 
-  // Auto-scroll to relevant time on mount
   useEffect(() => {
     if (scrollRef.current) {
       const scrollTo = showNowLine ? nowLeft - 100 : 0;
@@ -66,7 +92,6 @@ export function TimelineView({ date, bookings, onBookingClick }: TimelineViewPro
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      {/* Wrapper with both scrolls */}
       <div ref={scrollRef} className="flex-1 overflow-auto">
         <div className="relative" style={{ minWidth: TABLE_COL_WIDTH + totalWidth }}>
           {/* Time header row - sticky top */}
@@ -89,8 +114,8 @@ export function TimelineView({ date, bookings, onBookingClick }: TimelineViewPro
           </div>
 
           {/* Table rows */}
-          {TABLES.map((table) => {
-            const tableBookings = bookings.filter((b) => b.table_id === table.id);
+          {TABLES.map((table, tableIndex) => {
+            const tableBookings = bookings.filter((b) => b.table_ids.includes(table.id));
             return (
               <div
                 key={table.id}
@@ -117,13 +142,25 @@ export function TimelineView({ date, bookings, onBookingClick }: TimelineViewPro
                   ))}
 
                   {/* Bookings */}
-                  {tableBookings.map((booking) => (
-                    <BookingBlock
-                      key={booking.id}
-                      booking={booking}
-                      onClick={() => onBookingClick(booking)}
-                    />
-                  ))}
+                  {tableBookings.map((booking) => {
+                    const sortedTables = [...booking.table_ids].sort();
+                    const firstTable = sortedTables[0];
+                    const isFirst = table.id === firstTable;
+                    // Calculate span: how many consecutive rows from this table
+                    const allTableIndices = TABLES.map((t) => t.id);
+                    const firstIdx = allTableIndices.indexOf(firstTable);
+                    const spanCount = sortedTables.length;
+
+                    return (
+                      <BookingBlock
+                        key={booking.id}
+                        booking={booking}
+                        onClick={() => onBookingClick(booking)}
+                        isFirst={isFirst}
+                        spanCount={spanCount}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             );

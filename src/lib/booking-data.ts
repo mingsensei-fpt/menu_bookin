@@ -4,7 +4,7 @@ export interface Booking {
   id: string;
   customer_name: string;
   number_of_people: number;
-  table_id: string;
+  table_ids: string[]; // multiple tables
   start_time: string; // HH:mm
   end_time: string;   // HH:mm
   note: string;
@@ -19,7 +19,7 @@ export interface Table {
 
 export const TABLES: Table[] = Array.from({ length: 10 }, (_, i) => ({
   id: `T${i + 1}`,
-  capacity: [2, 2, 4, 4, 4, 6, 6, 8, 8, 10][i],
+  capacity: 2,
 }));
 
 export const TIME_SLOTS: string[] = [];
@@ -59,8 +59,8 @@ export function hasConflict(booking: Booking, others: Booking[]): boolean {
   return others.some(
     (b) =>
       b.id !== booking.id &&
-      b.table_id === booking.table_id &&
       b.date === booking.date &&
+      b.table_ids.some((tid) => booking.table_ids.includes(tid)) &&
       timeToMinutes(booking.start_time) < timeToMinutes(b.end_time) &&
       timeToMinutes(booking.end_time) > timeToMinutes(b.start_time)
   );
@@ -80,7 +80,7 @@ export const DEMO_BOOKINGS: Booking[] = [
     id: "1",
     customer_name: "Nguyen Van A",
     number_of_people: 4,
-    table_id: "T1",
+    table_ids: ["T1", "T2"],
     start_time: "18:00",
     end_time: "20:00",
     note: "Birthday dinner",
@@ -91,7 +91,7 @@ export const DEMO_BOOKINGS: Booking[] = [
     id: "2",
     customer_name: "Tran Thi B",
     number_of_people: 2,
-    table_id: "T3",
+    table_ids: ["T3"],
     start_time: "17:30",
     end_time: "19:00",
     note: "",
@@ -102,7 +102,7 @@ export const DEMO_BOOKINGS: Booking[] = [
     id: "3",
     customer_name: "Le Van C",
     number_of_people: 6,
-    table_id: "T5",
+    table_ids: ["T5", "T6", "T7"],
     start_time: "19:00",
     end_time: "21:00",
     note: "Anniversary",
@@ -112,8 +112,8 @@ export const DEMO_BOOKINGS: Booking[] = [
   {
     id: "4",
     customer_name: "Pham D",
-    number_of_people: 3,
-    table_id: "T2",
+    number_of_people: 2,
+    table_ids: ["T4"],
     start_time: "18:30",
     end_time: "20:30",
     note: "",

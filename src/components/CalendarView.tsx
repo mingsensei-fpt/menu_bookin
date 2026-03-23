@@ -20,13 +20,12 @@ export function CalendarView({ date, onSelectDate, datesWithBookings }: Calendar
     setExporting(true);
 
     try {
-      // Remove height constraint for capture
       const wrapper = calendarRef.current;
       const prevStyle = wrapper.style.cssText;
       wrapper.style.height = "auto";
       wrapper.style.maxHeight = "none";
+      wrapper.style.overflow = "visible";
 
-      // Wait for reflow
       await new Promise((r) => setTimeout(r, 100));
 
       const canvas = await html2canvas(wrapper, {
@@ -35,7 +34,6 @@ export function CalendarView({ date, onSelectDate, datesWithBookings }: Calendar
         useCORS: true,
       });
 
-      // Restore
       wrapper.style.cssText = prevStyle;
 
       const link = document.createElement("a");
@@ -50,7 +48,7 @@ export function CalendarView({ date, onSelectDate, datesWithBookings }: Calendar
   };
 
   return (
-    <div className="flex flex-col" style={{ height: "50dvh" }}>
+    <div className="flex flex-col" style={{ height: "50dvh", minHeight: 320 }}>
       <div className="flex justify-end px-4 pt-2">
         <button
           onClick={handleExport}
@@ -64,7 +62,8 @@ export function CalendarView({ date, onSelectDate, datesWithBookings }: Calendar
 
       <div
         ref={calendarRef}
-        className="flex flex-1 items-start justify-center overflow-hidden p-4"
+        className="flex flex-1 items-center justify-center p-4"
+        style={{ maxHeight: "calc(50dvh - 48px)", overflow: "hidden" }}
       >
         <Calendar
           mode="single"
