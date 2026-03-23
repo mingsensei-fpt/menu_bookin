@@ -91,7 +91,7 @@ export function TimelineView({ date, bookings, onBookingClick }: TimelineViewPro
   }, [date]);
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex flex-col overflow-hidden" style={{ height: "60dvh" }}>
       <div ref={scrollRef} className="flex-1 overflow-auto">
         <div className="relative" style={{ minWidth: TABLE_COL_WIDTH + totalWidth }}>
           {/* Time header row - sticky top */}
