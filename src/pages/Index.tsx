@@ -35,12 +35,12 @@ const Index = () => {
     setModalOpen(true);
   };
 
-  const handleSave = (data: Omit<Booking, "id" | "status">) => {
+  const handleSave = async (data: Omit<Booking, "id" | "status">) => {
     if (editingBooking) {
-      updateBooking(editingBooking.id, data);
+      await updateBooking(editingBooking.id, data);
       return;
     }
-    return addBooking(data);
+    return await addBooking(data);
   };
 
   const openNewBooking = () => {
