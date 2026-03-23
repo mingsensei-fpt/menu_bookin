@@ -59,6 +59,8 @@ function BookingBlock({
   return (
     <button
       onClick={onClick}
+      data-block
+      data-span={isFirst ? spanCount : undefined}
       className={`absolute rounded-md px-1.5 py-0.5 text-left shadow-sm transition-transform active:scale-[0.98] overflow-hidden ${statusClasses[booking.status]} ${!isFirst ? "pointer-events-none opacity-0" : ""}`}
       style={{
         left,
