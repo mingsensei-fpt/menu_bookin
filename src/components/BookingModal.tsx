@@ -16,7 +16,7 @@ import { Trash2 } from "lucide-react";
 interface BookingModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (data: Omit<Booking, "id" | "status">) => { conflict: boolean } | void;
+  onSave: (data: Omit<Booking, "id" | "status">) => Promise<{ conflict: boolean }> | { conflict: boolean } | void;
   onDelete?: (id: string) => void;
   booking?: Booking | null;
   date: string;
