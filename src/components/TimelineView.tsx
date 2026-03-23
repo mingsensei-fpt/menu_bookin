@@ -127,19 +127,37 @@ export function TimelineView({ date, bookings, onBookingClick }: TimelineViewPro
       clone.style.overflow = "visible";
       clone.style.background = "#ffffff";
 
+      const EXPORT_ROW = 56;
+
+      // Remove the now-indicator (red line)
+      const nowLines = clone.querySelectorAll<HTMLElement>("[data-now-line]");
+      nowLines.forEach((line) => line.remove());
+
       // Reset all rows to fixed height for export
       const rows = clone.querySelectorAll<HTMLElement>("[data-row]");
       rows.forEach((row) => {
-        row.style.height = "56px";
+        row.style.height = `${EXPORT_ROW}px`;
       });
+
+      // Fix grid cells too
+      const gridCells = clone.querySelectorAll<HTMLElement>("[data-grid-cell]");
+      gridCells.forEach((cell) => {
+        cell.style.height = `${EXPORT_ROW}px`;
+      });
+
+      // Fix booking blocks — use data-span for multi-row, otherwise single row
       const blocks = clone.querySelectorAll<HTMLElement>("[data-block]");
       blocks.forEach((block) => {
-        block.style.height = "52px";
-      });
-      const spanBlocks = clone.querySelectorAll<HTMLElement>("[data-span]");
-      spanBlocks.forEach((block) => {
-        const span = parseInt(block.getAttribute("data-span") || "1");
-        block.style.height = `${span * 56 - 4}px`;
+        const span = block.getAttribute("data-span");
+        if (span) {
+          const n = parseInt(span);
+          block.style.height = `${n * EXPORT_ROW - 4}px`;
+        } else {
+          block.style.height = `${EXPORT_ROW - 4}px`;
+        }
+        // Ensure text is visible
+        block.style.overflow = "visible";
+        block.style.whiteSpace = "nowrap";
       });
 
       // Remove sticky positioning for clean render
