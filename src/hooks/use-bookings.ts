@@ -1,8 +1,34 @@
-import { useState, useCallback } from "react";
-import { Booking, DEMO_BOOKINGS, hasConflict } from "@/lib/booking-data";
+import { useState, useCallback, useEffect } from "react";
+import { Booking, hasConflict } from "@/lib/booking-data";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useBookings() {
-  const [bookings, setBookings] = useState<Booking[]>(DEMO_BOOKINGS);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+
+  // Fetch all bookings on mount
+  useEffect(() => {
+    const fetchBookings = async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*");
+      if (!error && data) {
+        setBookings(data.map((b) => ({ ...b, date: b.date })) as Booking[]);
+      }
+    };
+    fetchBookings();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel("bookings-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
+        fetchBookings();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const getBookingsForDate = useCallback(
     (date: string) => bookings.filter((b) => b.date === date),
@@ -10,47 +36,51 @@ export function useBookings() {
   );
 
   const getDatesWithBookings = useCallback(() => {
-    const dates = new Set(bookings.map((b) => b.date));
-    return dates;
+    return new Set(bookings.map((b) => b.date));
   }, [bookings]);
 
   const addBooking = useCallback(
-    (booking: Omit<Booking, "id" | "status">) => {
-      const newBooking: Booking = {
-        ...booking,
-        id: crypto.randomUUID(),
-        status: "confirmed",
-      };
-      const dateBookings = bookings.filter(
-        (b) => b.date === booking.date
-      );
-      const conflict = hasConflict(newBooking, dateBookings);
-      if (conflict) newBooking.status = "conflict";
-      setBookings((prev) => [...prev, newBooking]);
-      return { conflict };
+    async (booking: Omit<Booking, "id" | "status">) => {
+      const dateBookings = bookings.filter((b) => b.date === booking.date);
+      const tempBooking = { ...booking, id: "temp", status: "confirmed" as const };
+      const conflict = hasConflict(tempBooking, dateBookings);
+      const status = conflict ? "conflict" : "confirmed";
+
+      const { error } = await supabase.from("bookings").insert({
+        customer_name: booking.customer_name,
+        number_of_people: booking.number_of_people,
+        table_ids: booking.table_ids,
+        start_time: booking.start_time,
+        end_time: booking.end_time,
+        note: booking.note,
+        date: booking.date,
+        status,
+      });
+
+      return { conflict: !!error ? false : conflict };
     },
     [bookings]
   );
 
   const updateBooking = useCallback(
-    (id: string, updates: Partial<Omit<Booking, "id">>) => {
-      setBookings((prev) => {
-        const updated = prev.map((b) => {
-          if (b.id !== id) return b;
-          const merged = { ...b, ...updates };
-          const others = prev.filter((x) => x.id !== id && x.date === merged.date);
-          merged.status = hasConflict(merged, others) ? "conflict" : 
-            (merged.status === "conflict" ? "confirmed" : merged.status);
-          return merged;
-        });
-        return updated;
-      });
+    async (id: string, updates: Partial<Omit<Booking, "id">>) => {
+      const current = bookings.find((b) => b.id === id);
+      if (!current) return;
+      const merged = { ...current, ...updates };
+      const others = bookings.filter((x) => x.id !== id && x.date === merged.date);
+      const conflict = hasConflict(merged, others);
+      const status = conflict ? "conflict" : merged.status === "conflict" ? "confirmed" : merged.status;
+
+      await supabase.from("bookings").update({
+        ...updates,
+        status,
+      }).eq("id", id);
     },
-    []
+    [bookings]
   );
 
-  const deleteBooking = useCallback((id: string) => {
-    setBookings((prev) => prev.filter((b) => b.id !== id));
+  const deleteBooking = useCallback(async (id: string) => {
+    await supabase.from("bookings").delete().eq("id", id);
   }, []);
 
   return { bookings, getBookingsForDate, getDatesWithBookings, addBooking, updateBooking, deleteBooking };
