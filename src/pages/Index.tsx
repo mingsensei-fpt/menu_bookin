@@ -47,14 +47,15 @@ const Index = () => {
     <div className="flex h-dvh flex-col bg-background">
       <DateNav date={date} onDateChange={setDate} view={view} onViewChange={setView} />
 
-      {view === "calendar" ? (
+      <TimelineView date={date} bookings={dayBookings} onBookingClick={handleBookingClick} />
+
+      {view === "calendar" && (
         <CalendarView
           date={date}
           onSelectDate={handleSelectCalendarDate}
+          onClose={() => setView("timeline")}
           datesWithBookings={getDatesWithBookings()}
         />
-      ) : (
-        <TimelineView date={date} bookings={dayBookings} onBookingClick={handleBookingClick} />
       )}
 
       {/* FAB */}
