@@ -127,7 +127,7 @@ export function TimelineView({ date, bookings, onBookingClick }: TimelineViewPro
       clone.style.overflow = "visible";
       clone.style.background = "#ffffff";
 
-      const EXPORT_ROW = 56;
+      const EXPORT_ROW = 64;
 
       // Remove the now-indicator (red line)
       const nowLines = clone.querySelectorAll<HTMLElement>("[data-now-line]");
@@ -145,19 +145,31 @@ export function TimelineView({ date, bookings, onBookingClick }: TimelineViewPro
         cell.style.height = `${EXPORT_ROW}px`;
       });
 
-      // Fix booking blocks — use data-span for multi-row, otherwise single row
+      // Fix booking blocks for export layout
       const blocks = clone.querySelectorAll<HTMLElement>("[data-block]");
       blocks.forEach((block) => {
-        const span = block.getAttribute("data-span");
-        if (span) {
-          const n = parseInt(span);
-          block.style.height = `${n * EXPORT_ROW - 4}px`;
-        } else {
-          block.style.height = `${EXPORT_ROW - 4}px`;
-        }
-        // Ensure text is visible
-        block.style.overflow = "visible";
-        block.style.whiteSpace = "nowrap";
+        const span = parseInt(block.getAttribute("data-span") || "1");
+        block.style.height = `${span * EXPORT_ROW - 6}px`;
+        block.style.padding = "8px 10px";
+        block.style.boxSizing = "border-box";
+        block.style.display = "flex";
+        block.style.flexDirection = "column";
+        block.style.justifyContent = "center";
+        block.style.gap = "3px";
+        block.style.overflow = "hidden";
+        block.style.whiteSpace = "normal";
+        block.style.alignItems = "flex-start";
+
+        const textLines = block.querySelectorAll<HTMLElement>("div");
+        textLines.forEach((line, index) => {
+          line.style.overflow = "visible";
+          line.style.textOverflow = "clip";
+          line.style.whiteSpace = "nowrap";
+          line.style.lineHeight = index === 0 ? "1.35" : "1.4";
+          line.style.fontSize = index === 0 ? "11px" : "9px";
+          line.style.minHeight = index === 0 ? "15px" : "13px";
+          line.style.display = "block";
+        });
       });
 
       // Remove sticky positioning for clean render
