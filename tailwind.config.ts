@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -46,6 +49,18 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        booking: {
+          confirmed: "hsl(var(--booking-confirmed))",
+          "confirmed-foreground": "hsl(var(--booking-confirmed-foreground))",
+          pending: "hsl(var(--booking-pending))",
+          "pending-foreground": "hsl(var(--booking-pending-foreground))",
+          conflict: "hsl(var(--booking-conflict))",
+          "conflict-foreground": "hsl(var(--booking-conflict-foreground))",
+        },
+        timeline: {
+          grid: "hsl(var(--timeline-grid))",
+          header: "hsl(var(--timeline-header))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
