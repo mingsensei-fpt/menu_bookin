@@ -117,7 +117,8 @@ export function useBookings() {
       return;
     }
     toast.success("Booking deleted");
-  }, []);
+    await fetchBookings();
+  }, [fetchBookings]);
 
   return { bookings, getBookingsForDate, getDatesWithBookings, addBooking, updateBooking, deleteBooking };
 }
