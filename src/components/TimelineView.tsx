@@ -90,7 +90,7 @@ function BookingBlock({
   );
 }
 
-export function TimelineView({ date, bookings, onBookingClick }: TimelineViewProps) {
+export function TimelineView({ date, bookings, onBookingClick, loading }: TimelineViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
