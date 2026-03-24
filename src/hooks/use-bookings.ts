@@ -1,23 +1,26 @@
 import { useState, useCallback, useEffect } from "react";
 import { Booking, hasConflict } from "@/lib/booking-data";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function useBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
 
-  // Fetch all bookings on mount
+  const fetchBookings = useCallback(async () => {
+    const { data, error } = await supabase.from("bookings").select("*");
+    if (error) {
+      console.error("Failed to fetch bookings:", error);
+      toast.error("Failed to load bookings");
+      return;
+    }
+    if (data) {
+      setBookings(data as Booking[]);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchBookings = async () => {
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("*");
-      if (!error && data) {
-        setBookings(data.map((b) => ({ ...b, date: b.date })) as Booking[]);
-      }
-    };
     fetchBookings();
 
-    // Subscribe to realtime changes
     const channel = supabase
       .channel("bookings-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
@@ -28,7 +31,7 @@ export function useBookings() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchBookings]);
 
   const getBookingsForDate = useCallback(
     (date: string) => bookings.filter((b) => b.date === date),
@@ -52,12 +55,19 @@ export function useBookings() {
         table_ids: booking.table_ids,
         start_time: booking.start_time,
         end_time: booking.end_time,
-        note: booking.note,
+        note: booking.note || "",
         date: booking.date,
         status,
       });
 
-      return { conflict: !!error ? false : conflict };
+      if (error) {
+        console.error("Failed to add booking:", error);
+        toast.error("Failed to create booking: " + error.message);
+        return { conflict: false };
+      }
+
+      toast.success(conflict ? "Booking created with conflict" : "Booking created");
+      return { conflict };
     },
     [bookings]
   );
@@ -65,22 +75,46 @@ export function useBookings() {
   const updateBooking = useCallback(
     async (id: string, updates: Partial<Omit<Booking, "id">>) => {
       const current = bookings.find((b) => b.id === id);
-      if (!current) return;
+      if (!current) return { conflict: false };
       const merged = { ...current, ...updates };
       const others = bookings.filter((x) => x.id !== id && x.date === merged.date);
       const conflict = hasConflict(merged, others);
       const status = conflict ? "conflict" : merged.status === "conflict" ? "confirmed" : merged.status;
 
-      await supabase.from("bookings").update({
-        ...updates,
-        status,
-      }).eq("id", id);
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          customer_name: merged.customer_name,
+          number_of_people: merged.number_of_people,
+          table_ids: merged.table_ids,
+          start_time: merged.start_time,
+          end_time: merged.end_time,
+          note: merged.note || "",
+          date: merged.date,
+          status,
+        })
+        .eq("id", id);
+
+      if (error) {
+        console.error("Failed to update booking:", error);
+        toast.error("Failed to update booking: " + error.message);
+        return { conflict: false };
+      }
+
+      toast.success("Booking updated");
+      return { conflict };
     },
     [bookings]
   );
 
   const deleteBooking = useCallback(async (id: string) => {
-    await supabase.from("bookings").delete().eq("id", id);
+    const { error } = await supabase.from("bookings").delete().eq("id", id);
+    if (error) {
+      console.error("Failed to delete booking:", error);
+      toast.error("Failed to delete booking: " + error.message);
+      return;
+    }
+    toast.success("Booking deleted");
   }, []);
 
   return { bookings, getBookingsForDate, getDatesWithBookings, addBooking, updateBooking, deleteBooking };

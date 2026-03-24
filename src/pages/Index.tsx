@@ -37,8 +37,7 @@ const Index = () => {
 
   const handleSave = async (data: Omit<Booking, "id" | "status">) => {
     if (editingBooking) {
-      await updateBooking(editingBooking.id, data);
-      return;
+      return await updateBooking(editingBooking.id, data);
     }
     return await addBooking(data);
   };
