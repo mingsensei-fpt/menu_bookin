@@ -103,7 +103,6 @@ export function BookingModal({ open, onClose, onSave, onDelete, booking, date }:
               id="people"
               type="number"
               min={1}
-              max={20}
               value={form.number_of_people}
               onChange={(e) => update("number_of_people", parseInt(e.target.value) || 1)}
             />

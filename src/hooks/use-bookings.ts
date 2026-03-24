@@ -67,9 +67,10 @@ export function useBookings() {
       }
 
       toast.success(conflict ? "Booking created with conflict" : "Booking created");
+      await fetchBookings();
       return { conflict };
     },
-    [bookings]
+    [bookings, fetchBookings]
   );
 
   const updateBooking = useCallback(
@@ -102,9 +103,10 @@ export function useBookings() {
       }
 
       toast.success("Booking updated");
+      await fetchBookings();
       return { conflict };
     },
-    [bookings]
+    [bookings, fetchBookings]
   );
 
   const deleteBooking = useCallback(async (id: string) => {
@@ -115,7 +117,8 @@ export function useBookings() {
       return;
     }
     toast.success("Booking deleted");
-  }, []);
+    await fetchBookings();
+  }, [fetchBookings]);
 
   return { bookings, getBookingsForDate, getDatesWithBookings, addBooking, updateBooking, deleteBooking };
 }
