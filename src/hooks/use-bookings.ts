@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 export function useBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchBookings = useCallback(async () => {
     const { data, error } = await supabase.from("bookings").select("*");
