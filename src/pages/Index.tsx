@@ -18,7 +18,7 @@ const Index = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
-  const { getBookingsForDate, getDatesWithBookings, addBooking, updateBooking, deleteBooking } =
+  const { loading, getBookingsForDate, getDatesWithBookings, addBooking, updateBooking, deleteBooking } =
     useBookings();
 
   const dateStr = format(date, "yyyy-MM-dd");
@@ -69,7 +69,7 @@ const Index = () => {
         )}
       </DateNav>
 
-      <TimelineView date={date} bookings={dayBookings} onBookingClick={handleBookingClick} />
+      <TimelineView date={date} bookings={dayBookings} onBookingClick={handleBookingClick} loading={loading} />
 
       {view === "calendar" && (
         <CalendarView
