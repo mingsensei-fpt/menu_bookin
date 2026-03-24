@@ -49,7 +49,7 @@ const Index = () => {
   };
 
   return (
-    <div className="flex h-dvh flex-col bg-background">
+    <div className="flex h-dvh flex-col bg-background pt-[env(safe-area-inset-top)]">
       <DateNav date={date} onDateChange={setDate} view={view} onViewChange={setView}>
         {isLoggedIn ? (
           <button
