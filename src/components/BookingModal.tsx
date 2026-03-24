@@ -81,7 +81,7 @@ export function BookingModal({ open, onClose, onSave, onDelete, booking, date }:
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-[95vw] rounded-xl sm:max-w-md">
+      <DialogContent className="max-w-[95vw] rounded-xl sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{booking ? "Edit Booking" : "New Booking"}</DialogTitle>
         </DialogHeader>
