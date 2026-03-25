@@ -44,7 +44,7 @@ export function useBookings() {
   }, [bookings]);
 
   const addBooking = useCallback(
-    async (booking: Omit<Booking, "id" | "status">) => {
+    async (booking: Omit<Booking, "id" | "status"> & { location_id?: string }) => {
       const dateBookings = bookings.filter((b) => b.date === booking.date);
       const tempBooking = { ...booking, id: "temp", status: "confirmed" as const };
       const conflict = hasConflict(tempBooking, dateBookings);
@@ -59,7 +59,8 @@ export function useBookings() {
         note: booking.note || "",
         date: booking.date,
         status,
-      });
+        location_id: booking.location_id || null,
+      } as any);
 
       if (error) {
         console.error("Failed to add booking:", error);

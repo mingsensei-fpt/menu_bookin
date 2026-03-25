@@ -44,6 +44,8 @@ All colors MUST be HSL.
     --booking-pending-foreground: 30 20% 15%;
     --booking-conflict: 0 72% 51%;
     --booking-conflict-foreground: 0 0% 100%;
+    --booking-past: 45 93% 47%;
+    --booking-past-foreground: 30 20% 15%;
 
     --timeline-grid: 220 13% 92%;
     --timeline-header: 220 15% 96%;
@@ -93,6 +95,8 @@ All colors MUST be HSL.
     --booking-pending-foreground: 0 0% 100%;
     --booking-conflict: 0 62% 40%;
     --booking-conflict-foreground: 0 0% 100%;
+    --booking-past: 45 80% 40%;
+    --booking-past-foreground: 0 0% 100%;
 
     --timeline-grid: 220 15% 15%;
     --timeline-header: 220 15% 12%;

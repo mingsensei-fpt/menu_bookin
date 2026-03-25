@@ -3,10 +3,12 @@ import { format } from "date-fns";
 import { Plus, LogIn, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DateNav } from "@/components/DateNav";
+import { LocationSwitcher } from "@/components/LocationSwitcher";
 import { CalendarView } from "@/components/CalendarView";
 import { TimelineView } from "@/components/TimelineView";
 import { BookingModal } from "@/components/BookingModal";
 import { useBookings } from "@/hooks/use-bookings";
+import { useLocations } from "@/hooks/use-locations";
 import { useAuth } from "@/hooks/use-auth";
 import { Booking } from "@/lib/booking-data";
 
@@ -18,11 +20,15 @@ const Index = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
+  const { locations, tables, selectedLocationId, setSelectedLocationId } = useLocations();
   const { loading, getBookingsForDate, getDatesWithBookings, addBooking, updateBooking, deleteBooking } =
     useBookings();
 
   const dateStr = format(date, "yyyy-MM-dd");
-  const dayBookings = getBookingsForDate(dateStr);
+  // Filter bookings by selected location
+  const dayBookings = getBookingsForDate(dateStr).filter(
+    (b) => !selectedLocationId || b.location_id === selectedLocationId
+  );
 
   const handleSelectCalendarDate = (d: Date) => {
     setDate(d);
@@ -39,7 +45,7 @@ const Index = () => {
     if (editingBooking) {
       return await updateBooking(editingBooking.id, data);
     }
-    return await addBooking(data);
+    return await addBooking({ ...data, location_id: selectedLocationId || undefined });
   };
 
   const openNewBooking = () => {
@@ -69,7 +75,19 @@ const Index = () => {
         )}
       </DateNav>
 
-      <TimelineView date={date} bookings={dayBookings} onBookingClick={handleBookingClick} loading={loading} />
+      <LocationSwitcher
+        locations={locations}
+        selectedId={selectedLocationId}
+        onChange={setSelectedLocationId}
+      />
+
+      <TimelineView
+        date={date}
+        bookings={dayBookings}
+        tables={tables}
+        onBookingClick={handleBookingClick}
+        loading={loading}
+      />
 
       {view === "calendar" && (
         <CalendarView
@@ -80,7 +98,6 @@ const Index = () => {
         />
       )}
 
-      {/* FAB - only when logged in */}
       {isLoggedIn && (
         <button
           onClick={openNewBooking}
@@ -98,6 +115,7 @@ const Index = () => {
           onDelete={deleteBooking}
           booking={editingBooking}
           date={dateStr}
+          tables={tables}
         />
       )}
     </div>

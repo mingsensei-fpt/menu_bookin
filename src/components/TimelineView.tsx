@@ -1,21 +1,18 @@
 import { useRef, useEffect, useState } from "react";
 import {
-  TABLES,
   TIME_SLOTS,
-  getBookingLeft,
-  getBookingWidth,
   timeToMinutes,
   Booking,
+  Table,
 } from "@/lib/booking-data";
 import { format } from "date-fns";
 import { Download, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 
-const SLOT_W = 48; // smaller slot width
+const SLOT_W = 48;
 const HEADER_HEIGHT = 28;
 const TABLE_COL_WIDTH = 48;
 
-// Override position helpers to use local SLOT_W
 function localGetLeft(startTime: string): number {
   const startMins = timeToMinutes(startTime);
   const originMins = timeToMinutes("17:00");
@@ -28,9 +25,24 @@ function localGetWidth(startTime: string, endTime: string): number {
   return ((endMins - startMins) / 30) * SLOT_W;
 }
 
+function isBookingPastOrInProgress(booking: Booking, date: Date): boolean {
+  const now = new Date();
+  const isToday = format(now, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
+  if (!isToday) {
+    // If the booking date is in the past
+    const bookingDate = new Date(booking.date + "T00:00:00");
+    return bookingDate < new Date(format(now, "yyyy-MM-dd") + "T00:00:00");
+  }
+  // If today, check if booking end time has passed or is currently in progress
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const startMins = timeToMinutes(booking.start_time);
+  return nowMins >= startMins;
+}
+
 interface TimelineViewProps {
   date: Date;
   bookings: Booking[];
+  tables: Table[];
   onBookingClick: (booking: Booking) => void;
   loading?: boolean;
 }
@@ -41,12 +53,14 @@ function BookingBlock({
   isFirst,
   spanCount,
   rowHeight,
+  isPast,
 }: {
   booking: Booking;
   onClick: () => void;
   isFirst: boolean;
   spanCount: number;
   rowHeight: string;
+  isPast: boolean;
 }) {
   const left = localGetLeft(booking.start_time);
   const width = localGetWidth(booking.start_time, booking.end_time);
@@ -57,12 +71,16 @@ function BookingBlock({
     conflict: "bg-booking-conflict text-booking-conflict-foreground",
   };
 
+  const colorClass = isPast
+    ? "bg-booking-past text-booking-past-foreground"
+    : statusClasses[booking.status];
+
   return (
     <button
       onClick={onClick}
       data-block
       data-span={isFirst ? spanCount : undefined}
-      className={`absolute rounded-md px-1.5 py-0.5 text-left shadow-sm transition-transform active:scale-[0.98] overflow-hidden ${statusClasses[booking.status]} ${!isFirst ? "pointer-events-none opacity-0" : ""}`}
+      className={`absolute rounded-md px-1.5 py-0.5 text-left shadow-sm transition-transform active:scale-[0.98] overflow-hidden ${colorClass} ${!isFirst ? "pointer-events-none opacity-0" : ""}`}
       style={{
         left,
         width: Math.max(width, SLOT_W),
@@ -90,13 +108,14 @@ function BookingBlock({
   );
 }
 
-export function TimelineView({ date, bookings, onBookingClick, loading }: TimelineViewProps) {
+export function TimelineView({ date, bookings, tables, onBookingClick, loading }: TimelineViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
   const totalWidth = TIME_SLOTS.length * SLOT_W;
 
-  const rowHeight = `calc((60dvh - ${HEADER_HEIGHT}px) / ${TABLES.length})`;
+  const tableCount = tables.length || 1;
+  const rowHeight = `calc((60dvh - ${HEADER_HEIGHT}px) / ${tableCount})`;
 
   const now = new Date();
   const isToday = format(now, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
@@ -117,7 +136,6 @@ export function TimelineView({ date, bookings, onBookingClick, loading }: Timeli
     if (!timelineRef.current) return;
     setExporting(true);
     try {
-      // Clone the timeline into an offscreen container for clean capture
       const el = timelineRef.current;
       const clone = el.cloneNode(true) as HTMLElement;
       clone.style.position = "absolute";
@@ -130,23 +148,15 @@ export function TimelineView({ date, bookings, onBookingClick, loading }: Timeli
 
       const EXPORT_ROW = 64;
 
-      // Remove the now-indicator (red line)
       const nowLines = clone.querySelectorAll<HTMLElement>("[data-now-line]");
       nowLines.forEach((line) => line.remove());
 
-      // Reset all rows to fixed height for export
       const rows = clone.querySelectorAll<HTMLElement>("[data-row]");
-      rows.forEach((row) => {
-        row.style.height = `${EXPORT_ROW}px`;
-      });
+      rows.forEach((row) => { row.style.height = `${EXPORT_ROW}px`; });
 
-      // Fix grid cells too
       const gridCells = clone.querySelectorAll<HTMLElement>("[data-grid-cell]");
-      gridCells.forEach((cell) => {
-        cell.style.height = `${EXPORT_ROW}px`;
-      });
+      gridCells.forEach((cell) => { cell.style.height = `${EXPORT_ROW}px`; });
 
-      // Fix booking blocks for export layout
       const blocks = clone.querySelectorAll<HTMLElement>("[data-block]");
       blocks.forEach((block) => {
         const span = parseInt(block.getAttribute("data-span") || "1");
@@ -160,7 +170,6 @@ export function TimelineView({ date, bookings, onBookingClick, loading }: Timeli
         block.style.overflow = "hidden";
         block.style.whiteSpace = "normal";
         block.style.alignItems = "flex-start";
-
         const textLines = block.querySelectorAll<HTMLElement>("div");
         textLines.forEach((line, index) => {
           line.style.overflow = "visible";
@@ -173,7 +182,6 @@ export function TimelineView({ date, bookings, onBookingClick, loading }: Timeli
         });
       });
 
-      // Remove sticky positioning for clean render
       const stickyEls = clone.querySelectorAll<HTMLElement>(".sticky");
       stickyEls.forEach((s) => {
         s.style.position = "relative";
@@ -204,19 +212,18 @@ export function TimelineView({ date, bookings, onBookingClick, loading }: Timeli
     }
   };
 
-  // Only show label for full hours, half hours get empty label
   const getSlotLabel = (slot: string) => {
     return slot.endsWith(":00") ? slot : "";
   };
 
   return (
-    <div className="relative flex flex-col">
+    <div className="relative flex flex-col flex-1">
       {loading && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/60 backdrop-blur-sm">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       )}
-      <div className="overflow-hidden" style={{ height: "60dvh" }}>
+      <div className="overflow-hidden flex-1" style={{ minHeight: "60dvh" }}>
         <div ref={scrollRef} className="h-full overflow-x-auto overflow-y-hidden">
           <div ref={timelineRef} className="relative" style={{ minWidth: TABLE_COL_WIDTH + totalWidth }}>
             {/* Time header */}
@@ -226,20 +233,25 @@ export function TimelineView({ date, bookings, onBookingClick, loading }: Timeli
                 style={{ width: TABLE_COL_WIDTH }}
               />
               <div className="flex">
-                {TIME_SLOTS.map((slot) => (
-                  <div
-                    key={slot}
-                    className="flex-shrink-0 border-r border-border flex items-center justify-center text-[9px] font-medium text-muted-foreground"
-                    style={{ width: SLOT_W }}
-                  >
-                    {getSlotLabel(slot)}
-                  </div>
-                ))}
+                {TIME_SLOTS.map((slot) => {
+                  const isFullHour = slot.endsWith(":00");
+                  return (
+                    <div
+                      key={slot}
+                      className={`flex-shrink-0 border-r border-border flex items-center justify-center text-muted-foreground ${
+                        isFullHour ? "text-[11px] font-bold" : "text-[9px] font-medium"
+                      }`}
+                      style={{ width: SLOT_W }}
+                    >
+                      {getSlotLabel(slot)}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             {/* Table rows */}
-            {TABLES.map((table) => {
+            {tables.map((table) => {
               const tableBookings = bookings.filter((b) => b.table_ids.includes(table.id));
               return (
                 <div
@@ -258,12 +270,12 @@ export function TimelineView({ date, bookings, onBookingClick, loading }: Timeli
 
                   <div className="relative flex">
                     {TIME_SLOTS.map((slot) => (
-                    <div
-                      key={slot}
-                      data-grid-cell
-                      className={`flex-shrink-0 border-r ${slot.endsWith(":00") ? "border-border" : "border-timeline-grid"}`}
-                      style={{ width: SLOT_W, height: rowHeight }}
-                    />
+                      <div
+                        key={slot}
+                        data-grid-cell
+                        className={`flex-shrink-0 border-r ${slot.endsWith(":00") ? "border-border" : "border-timeline-grid"}`}
+                        style={{ width: SLOT_W, height: rowHeight }}
+                      />
                     ))}
 
                     {tableBookings.map((booking) => {
@@ -271,6 +283,7 @@ export function TimelineView({ date, bookings, onBookingClick, loading }: Timeli
                       const firstTable = sortedTables[0];
                       const isFirst = table.id === firstTable;
                       const spanCount = sortedTables.length;
+                      const isPast = isBookingPastOrInProgress(booking, date);
 
                       return (
                         <BookingBlock
@@ -280,6 +293,7 @@ export function TimelineView({ date, bookings, onBookingClick, loading }: Timeli
                           isFirst={isFirst}
                           spanCount={spanCount}
                           rowHeight={rowHeight}
+                          isPast={isPast}
                         />
                       );
                     })}
@@ -299,7 +313,6 @@ export function TimelineView({ date, bookings, onBookingClick, loading }: Timeli
         </div>
       </div>
 
-      {/* Export button below timeline */}
       <div className="flex justify-center py-3">
         <button
           onClick={handleExport}

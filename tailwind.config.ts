@@ -57,6 +57,8 @@ export default {
           "pending-foreground": "hsl(var(--booking-pending-foreground))",
           conflict: "hsl(var(--booking-conflict))",
           "conflict-foreground": "hsl(var(--booking-conflict-foreground))",
+          past: "hsl(var(--booking-past))",
+          "past-foreground": "hsl(var(--booking-past-foreground))",
         },
         timeline: {
           grid: "hsl(var(--timeline-grid))",

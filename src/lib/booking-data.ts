@@ -4,12 +4,13 @@ export interface Booking {
   id: string;
   customer_name: string;
   number_of_people: number;
-  table_ids: string[]; // multiple tables
-  start_time: string; // HH:mm
-  end_time: string;   // HH:mm
+  table_ids: string[];
+  start_time: string;
+  end_time: string;
   note: string;
   status: BookingStatus;
-  date: string; // YYYY-MM-DD
+  date: string;
+  location_id?: string;
 }
 
 export interface Table {
@@ -17,10 +18,8 @@ export interface Table {
   capacity: number;
 }
 
-export const TABLES: Table[] = Array.from({ length: 10 }, (_, i) => ({
-  id: `T${i + 1}`,
-  capacity: 2,
-}));
+// Default tables removed — now fetched from database via useLocations hook
+export const TABLES: Table[] = [];
 
 export const TIME_SLOTS: string[] = [];
 for (let h = 17; h <= 22; h++) {

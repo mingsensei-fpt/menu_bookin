@@ -21,6 +21,7 @@ export type Database = {
           date: string
           end_time: string
           id: string
+          location_id: string | null
           note: string
           number_of_people: number
           start_time: string
@@ -34,6 +35,7 @@ export type Database = {
           date: string
           end_time: string
           id?: string
+          location_id?: string | null
           note?: string
           number_of_people?: number
           start_time: string
@@ -47,6 +49,7 @@ export type Database = {
           date?: string
           end_time?: string
           id?: string
+          location_id?: string | null
           note?: string
           number_of_people?: number
           start_time?: string
@@ -54,7 +57,71 @@ export type Database = {
           table_ids?: string[]
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          table_prefix: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          table_prefix: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          table_prefix?: string
+        }
         Relationships: []
+      }
+      restaurant_tables: {
+        Row: {
+          capacity: number
+          created_at: string
+          id: string
+          location_id: string
+          sort_order: number
+          table_name: string
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          location_id: string
+          sort_order?: number
+          table_name: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          location_id?: string
+          sort_order?: number
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_tables_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

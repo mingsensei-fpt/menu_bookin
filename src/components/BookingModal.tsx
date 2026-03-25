@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TABLES, Booking, addHours } from "@/lib/booking-data";
+import { Booking, Table, addHours } from "@/lib/booking-data";
 import { Trash2 } from "lucide-react";
 
 interface BookingModalProps {
@@ -20,13 +20,16 @@ interface BookingModalProps {
   onDelete?: (id: string) => void;
   booking?: Booking | null;
   date: string;
+  tables: Table[];
 }
 
-export function BookingModal({ open, onClose, onSave, onDelete, booking, date }: BookingModalProps) {
+export function BookingModal({ open, onClose, onSave, onDelete, booking, date, tables }: BookingModalProps) {
+  const defaultTableId = tables.length > 0 ? tables[0].id : "T1";
+
   const [form, setForm] = useState({
     customer_name: "",
     number_of_people: 2,
-    table_ids: ["T1"] as string[],
+    table_ids: [defaultTableId] as string[],
     start_time: "18:00",
     end_time: "",
     note: "",
@@ -47,14 +50,14 @@ export function BookingModal({ open, onClose, onSave, onDelete, booking, date }:
       setForm({
         customer_name: "",
         number_of_people: 2,
-        table_ids: ["T1"],
+        table_ids: [tables.length > 0 ? tables[0].id : "T1"],
         start_time: "18:00",
         end_time: "",
         note: "",
       });
     }
     setWarning(false);
-  }, [booking, open]);
+  }, [booking, open, tables]);
 
   const handleSubmit = async () => {
     if (!form.customer_name.trim() || form.table_ids.length === 0) return;
@@ -111,7 +114,7 @@ export function BookingModal({ open, onClose, onSave, onDelete, booking, date }:
           <div>
             <Label>Tables (each seats 2)</Label>
             <div className="mt-1.5 flex flex-wrap gap-2">
-              {TABLES.map((t) => (
+              {tables.map((t) => (
                 <label
                   key={t.id}
                   className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
