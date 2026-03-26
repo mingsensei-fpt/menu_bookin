@@ -25,18 +25,29 @@ function localGetWidth(startTime: string, endTime: string): number {
   return ((endMins - startMins) / 30) * SLOT_W;
 }
 
-function isBookingPastOrInProgress(booking: Booking, date: Date): boolean {
-  const now = new Date();
+function getBookingTimeStatus(booking: Booking, date: Date, now: Date): "past" | "active" | "future" {
   const isToday = format(now, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
   if (!isToday) {
-    // If the booking date is in the past
     const bookingDate = new Date(booking.date + "T00:00:00");
-    return bookingDate < new Date(format(now, "yyyy-MM-dd") + "T00:00:00");
+    return bookingDate < new Date(format(now, "yyyy-MM-dd") + "T00:00:00") ? "past" : "future";
   }
-  // If today, check if booking end time has passed or is currently in progress
   const nowMins = now.getHours() * 60 + now.getMinutes();
   const startMins = timeToMinutes(booking.start_time);
-  return nowMins >= startMins;
+  const endMins = timeToMinutes(booking.end_time);
+  if (nowMins >= startMins && nowMins < endMins) return "active";
+  if (nowMins >= endMins) return "past";
+  return "future";
+}
+
+function formatTimeLabel(slot: string): string {
+  const [hStr, mStr] = slot.split(":");
+  let h = parseInt(hStr);
+  const m = parseInt(mStr);
+  const suffix = h >= 12 ? "pm" : "am";
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  if (m === 0) return `${h}${suffix}`;
+  return `${h}:${mStr}${suffix}`;
 }
 
 interface TimelineViewProps {
@@ -53,14 +64,14 @@ function BookingBlock({
   isFirst,
   spanCount,
   rowHeight,
-  isPast,
+  timeStatus,
 }: {
   booking: Booking;
   onClick: () => void;
   isFirst: boolean;
   spanCount: number;
   rowHeight: string;
-  isPast: boolean;
+  timeStatus: "past" | "active" | "future";
 }) {
   const left = localGetLeft(booking.start_time);
   const width = localGetWidth(booking.start_time, booking.end_time);
@@ -71,7 +82,7 @@ function BookingBlock({
     conflict: "bg-booking-conflict text-booking-conflict-foreground",
   };
 
-  const colorClass = isPast
+  const colorClass = timeStatus === "active" || timeStatus === "past"
     ? "bg-booking-past text-booking-past-foreground"
     : statusClasses[booking.status];
 
@@ -80,7 +91,7 @@ function BookingBlock({
       onClick={onClick}
       data-block
       data-span={isFirst ? spanCount : undefined}
-      className={`absolute rounded-md px-1.5 py-0.5 text-left shadow-sm transition-transform active:scale-[0.98] overflow-hidden ${colorClass} ${!isFirst ? "pointer-events-none opacity-0" : ""}`}
+      className={`absolute rounded-md px-1.5 py-0.5 text-left shadow-sm transition-colors duration-500 active:scale-[0.98] overflow-hidden ${colorClass} ${!isFirst ? "pointer-events-none opacity-0" : ""}`}
       style={{
         left,
         width: Math.max(width, SLOT_W),
@@ -112,14 +123,20 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const totalWidth = TIME_SLOTS.length * SLOT_W;
+
+  // Update current time every 60 seconds
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const tableCount = tables.length || 1;
   const rowHeight = `calc((60dvh - ${HEADER_HEIGHT}px) / ${tableCount})`;
 
-  const now = new Date();
-  const isToday = format(now, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
-  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const isToday = format(currentTime, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
+  const nowMins = currentTime.getHours() * 60 + currentTime.getMinutes();
   const showNowLine = isToday && nowMins >= timeToMinutes("17:00") && nowMins <= timeToMinutes("22:00");
   const nowLeft = showNowLine
     ? ((nowMins - timeToMinutes("17:00")) / 30) * SLOT_W
@@ -213,7 +230,7 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
   };
 
   const getSlotLabel = (slot: string) => {
-    return slot.endsWith(":00") ? slot : "";
+    return slot.endsWith(":00") ? formatTimeLabel(slot) : "";
   };
 
   return (
@@ -238,10 +255,10 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
                   return (
                     <div
                       key={slot}
-                      className={`flex-shrink-0 border-r border-border flex items-center justify-center text-muted-foreground ${
-                        isFullHour ? "text-[11px] font-bold" : "text-[9px] font-medium"
+                      className={`flex-shrink-0 border-r flex items-center text-muted-foreground ${
+                        isFullHour ? "text-[11px] font-bold border-foreground/20" : "text-[9px] font-medium border-timeline-grid"
                       }`}
-                      style={{ width: SLOT_W }}
+                      style={{ width: SLOT_W, paddingLeft: 2 }}
                     >
                       {getSlotLabel(slot)}
                     </div>
@@ -273,7 +290,7 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
                       <div
                         key={slot}
                         data-grid-cell
-                        className={`flex-shrink-0 border-r ${slot.endsWith(":00") ? "border-border" : "border-timeline-grid"}`}
+                        className={`flex-shrink-0 border-r ${slot.endsWith(":00") ? "border-foreground/20" : "border-timeline-grid"}`}
                         style={{ width: SLOT_W, height: rowHeight }}
                       />
                     ))}
@@ -283,7 +300,7 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
                       const firstTable = sortedTables[0];
                       const isFirst = table.id === firstTable;
                       const spanCount = sortedTables.length;
-                      const isPast = isBookingPastOrInProgress(booking, date);
+                      const timeStatus = getBookingTimeStatus(booking, date, currentTime);
 
                       return (
                         <BookingBlock
@@ -293,7 +310,7 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
                           isFirst={isFirst}
                           spanCount={spanCount}
                           rowHeight={rowHeight}
-                          isPast={isPast}
+                          timeStatus={timeStatus}
                         />
                       );
                     })}
