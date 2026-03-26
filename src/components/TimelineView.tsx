@@ -246,20 +246,17 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
             {/* Time header */}
             <div className="sticky top-0 z-20 flex bg-timeline-header border-b border-border" style={{ height: HEADER_HEIGHT }}>
               <div
-                className="sticky left-0 z-10 flex-shrink-0 bg-timeline-header border-r border-border"
+                className="sticky left-0 z-10 flex-shrink-0 bg-timeline-header"
                 style={{ width: TABLE_COL_WIDTH }}
               />
               <div className="relative flex">
                 {TIME_SLOTS.map((slot) => {
                   const isFullHour = slot.endsWith(":00");
-                  const isHalfHour = slot.endsWith(":30");
                   const label = getSlotLabel(slot);
                   return (
                     <div
                       key={slot}
-                      className={`flex-shrink-0 border-r flex items-center text-muted-foreground relative ${
-                        isHalfHour ? "border-foreground/20" : "border-timeline-grid"
-                      } ${isFullHour ? "border-l border-l-foreground/20" : ""}`}
+                      className="flex-shrink-0 flex items-center text-muted-foreground relative border-r border-transparent"
                       style={{ width: SLOT_W }}
                     >
                       {label && (
