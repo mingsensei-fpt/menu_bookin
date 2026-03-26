@@ -21,15 +21,21 @@ export function useLocations() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const LOCATION_ORDER = ["Terrace", "Roma", "Verona", "Sorrento"];
+
   const fetchLocations = useCallback(async () => {
     const { data, error } = await supabase
       .from("locations")
-      .select("*")
-      .order("name");
+      .select("*");
     if (!error && data) {
-      setLocations(data as Location[]);
-      if (!selectedLocationId && data.length > 0) {
-        setSelectedLocationId(data[0].id);
+      const sorted = [...(data as Location[])].sort((a, b) => {
+        const ai = LOCATION_ORDER.indexOf(a.name);
+        const bi = LOCATION_ORDER.indexOf(b.name);
+        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+      });
+      setLocations(sorted);
+      if (!selectedLocationId && sorted.length > 0) {
+        setSelectedLocationId(sorted[0].id);
       }
     }
   }, [selectedLocationId]);
