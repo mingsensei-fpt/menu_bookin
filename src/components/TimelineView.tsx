@@ -252,13 +252,14 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
               <div className="relative flex">
                 {TIME_SLOTS.map((slot) => {
                   const isFullHour = slot.endsWith(":00");
+                  const isHalfHour = slot.endsWith(":30");
                   const label = getSlotLabel(slot);
                   return (
                     <div
                       key={slot}
                       className={`flex-shrink-0 border-r flex items-center text-muted-foreground relative ${
-                        isFullHour ? "border-foreground/20" : "border-timeline-grid"
-                      }`}
+                        isHalfHour ? "border-foreground/20" : "border-timeline-grid"
+                      } ${isFullHour ? "border-l border-l-foreground/20" : ""}`}
                       style={{ width: SLOT_W }}
                     >
                       {label && (
@@ -295,7 +296,7 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
                       <div
                         key={slot}
                         data-grid-cell
-                        className={`flex-shrink-0 border-r ${slot.endsWith(":00") ? "border-foreground/20" : "border-timeline-grid"}`}
+                        className={`flex-shrink-0 border-r ${slot.endsWith(":30") ? "border-foreground/20" : "border-timeline-grid"} ${slot.endsWith(":00") ? "border-l border-l-foreground/20" : ""}`}
                         style={{ width: SLOT_W, height: rowHeight }}
                       />
                     ))}
