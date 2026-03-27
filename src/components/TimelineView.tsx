@@ -165,6 +165,11 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
     }
   }, [date]);
 
+  useImperativeHandle(ref, () => ({
+    handleExport: async () => { await handleExport(); },
+    exporting,
+  }));
+
   const handleExport = async () => {
     if (!timelineRef.current) return;
     setExporting(true);
