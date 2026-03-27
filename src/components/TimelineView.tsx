@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import {
   TIME_SLOTS,
   timeToMinutes,
@@ -6,7 +6,7 @@ import {
   Table,
 } from "@/lib/booking-data";
 import { format } from "date-fns";
-import { Download, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 
 const SLOT_W = 48;
@@ -50,12 +50,21 @@ function formatTimeLabel(slot: string): string {
   return `${h}:${mStr}${suffix}`;
 }
 
+export interface TimelineViewHandle {
+  handleExport: () => Promise<void>;
+  exporting: boolean;
+}
+
 interface TimelineViewProps {
   date: Date;
   bookings: Booking[];
   tables: Table[];
   onBookingClick: (booking: Booking) => void;
   loading?: boolean;
+}
+
+function naturalSort(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 }
 
 function BookingBlock({
@@ -86,6 +95,8 @@ function BookingBlock({
     ? "bg-booking-past text-booking-past-foreground"
     : statusClasses[booking.status];
 
+  const sortedTableIds = [...booking.table_ids].sort(naturalSort);
+
   return (
     <button
       onClick={onClick}
@@ -104,13 +115,18 @@ function BookingBlock({
     >
       {isFirst && (
         <>
-          <div className="truncate text-[10px] font-semibold leading-tight">{booking.customer_name}</div>
+          {booking.note && (
+            <div className="absolute top-1 right-1 h-3 w-3 rounded-full bg-primary/80 flex items-center justify-center" title={booking.note}>
+              <span className="text-[6px] text-primary-foreground font-bold">✎</span>
+            </div>
+          )}
+          <div className="truncate text-[10px] font-semibold leading-tight pr-3">{booking.customer_name}</div>
           <div className="truncate text-[8px] opacity-90">
             {booking.number_of_people}p · {booking.start_time}–{booking.end_time}
           </div>
-          {booking.table_ids.length > 1 && (
+          {sortedTableIds.length > 1 && (
             <div className="truncate text-[8px] opacity-75">
-              {booking.table_ids.join(", ")}
+              {sortedTableIds.join(", ")}
             </div>
           )}
         </>
@@ -119,7 +135,7 @@ function BookingBlock({
   );
 }
 
-export function TimelineView({ date, bookings, tables, onBookingClick, loading }: TimelineViewProps) {
+export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(function TimelineView({ date, bookings, tables, onBookingClick, loading }, ref) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
@@ -148,6 +164,11 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
       scrollRef.current.scrollLeft = Math.max(0, scrollTo);
     }
   }, [date]);
+
+  useImperativeHandle(ref, () => ({
+    handleExport: async () => { await handleExport(); },
+    exporting,
+  }));
 
   const handleExport = async () => {
     if (!timelineRef.current) return;
@@ -250,9 +271,9 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
                 style={{ width: TABLE_COL_WIDTH }}
               />
               <div className="relative flex">
-                {TIME_SLOTS.map((slot) => {
-                  const isFullHour = slot.endsWith(":00");
+                {TIME_SLOTS.map((slot, idx) => {
                   const label = getSlotLabel(slot);
+                  const isFirstSlot = idx === 0;
                   return (
                     <div
                       key={slot}
@@ -260,7 +281,16 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
                       style={{ width: SLOT_W }}
                     >
                       {label && (
-                        <span className="absolute text-[11px] font-bold z-10" style={{ left: 0, top: '50%', transform: 'translate(-50%, -50%)' }}>
+                        <span
+                          className="absolute text-[11px] font-bold z-10 whitespace-nowrap"
+                          style={{
+                            left: 0,
+                            top: '50%',
+                            transform: isFirstSlot
+                              ? 'translate(0, -50%)'
+                              : 'translate(-50%, -50%)',
+                          }}
+                        >
                           {label}
                         </span>
                       )}
@@ -299,7 +329,7 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
                     ))}
 
                     {tableBookings.map((booking) => {
-                      const sortedTables = [...booking.table_ids].sort();
+                      const sortedTables = [...booking.table_ids].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
                       const firstTable = sortedTables[0];
                       const isFirst = table.id === firstTable;
                       const spanCount = sortedTables.length;
@@ -333,16 +363,6 @@ export function TimelineView({ date, bookings, tables, onBookingClick, loading }
         </div>
       </div>
 
-      <div className="flex justify-center py-3">
-        <button
-          onClick={handleExport}
-          disabled={exporting}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-sm transition-transform active:scale-95 disabled:opacity-60"
-        >
-          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          Export Timeline as PNG
-        </button>
-      </div>
     </div>
   );
-}
+});

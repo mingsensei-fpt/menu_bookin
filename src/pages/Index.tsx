@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { format } from "date-fns";
-import { Plus, LogIn, LogOut } from "lucide-react";
+import { Plus, LogIn, LogOut, Download, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DateNav } from "@/components/DateNav";
 import { LocationSwitcher } from "@/components/LocationSwitcher";
 import { CalendarView } from "@/components/CalendarView";
-import { TimelineView } from "@/components/TimelineView";
+import { TimelineView, TimelineViewHandle } from "@/components/TimelineView";
 import { BookingModal } from "@/components/BookingModal";
+import { ReservationList } from "@/components/ReservationList";
 import { useBookings } from "@/hooks/use-bookings";
 import { useLocations } from "@/hooks/use-locations";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,13 +20,14 @@ const Index = () => {
   const [view, setView] = useState<"calendar" | "timeline">("timeline");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const timelineRef = useRef<TimelineViewHandle>(null);
 
   const { locations, tables, selectedLocationId, setSelectedLocationId } = useLocations();
   const { loading, getBookingsForDate, getDatesWithBookings, addBooking, updateBooking, deleteBooking } =
     useBookings();
 
   const dateStr = format(date, "yyyy-MM-dd");
-  // Filter bookings by selected location
   const dayBookings = getBookingsForDate(dateStr).filter(
     (b) => !selectedLocationId || b.location_id === selectedLocationId
   );
@@ -53,9 +55,25 @@ const Index = () => {
     setModalOpen(true);
   };
 
+  const handleExport = async () => {
+    if (timelineRef.current) {
+      setExporting(true);
+      await timelineRef.current.handleExport();
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="flex h-dvh flex-col bg-background pt-[env(safe-area-inset-top)]">
       <DateNav date={date} onDateChange={setDate} view={view} onViewChange={setView}>
+        <button
+          onClick={handleExport}
+          disabled={exporting}
+          className="flex items-center gap-1 rounded-lg border border-border bg-muted px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors disabled:opacity-60"
+          title="Export Timeline as PNG"
+        >
+          {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+        </button>
         {isLoggedIn ? (
           <button
             onClick={logout}
@@ -82,12 +100,23 @@ const Index = () => {
       />
 
       <TimelineView
+        ref={timelineRef}
         date={date}
         bookings={dayBookings}
         tables={tables}
         onBookingClick={handleBookingClick}
         loading={loading}
       />
+
+      {/* Reservation list below timeline */}
+      <div className="flex-1 min-h-0 border-t border-border overflow-y-auto bg-card">
+        <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-2">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Reservations ({dayBookings.length})
+          </h2>
+        </div>
+        <ReservationList bookings={dayBookings} onBookingClick={handleBookingClick} />
+      </div>
 
       {view === "calendar" && (
         <CalendarView
