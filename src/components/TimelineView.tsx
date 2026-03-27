@@ -50,14 +50,17 @@ function formatTimeLabel(slot: string): string {
   return `${h}:${mStr}${suffix}`;
 }
 
+export interface TimelineViewHandle {
+  handleExport: () => Promise<void>;
+  exporting: boolean;
+}
+
 interface TimelineViewProps {
   date: Date;
   bookings: Booking[];
   tables: Table[];
   onBookingClick: (booking: Booking) => void;
   loading?: boolean;
-  onExport?: () => void;
-  exporting?: boolean;
 }
 
 function naturalSort(a: string, b: string): number {
@@ -132,7 +135,7 @@ function BookingBlock({
   );
 }
 
-export function TimelineView({ date, bookings, tables, onBookingClick, loading, onExport, exporting: _exporting }: TimelineViewProps) {
+export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(function TimelineView({ date, bookings, tables, onBookingClick, loading }, ref) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
