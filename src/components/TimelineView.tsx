@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import {
   TIME_SLOTS,
   timeToMinutes,
@@ -6,7 +6,7 @@ import {
   Table,
 } from "@/lib/booking-data";
 import { format } from "date-fns";
-import { Download, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 
 const SLOT_W = 48;
