@@ -115,9 +115,12 @@ function BookingBlock({
     >
       {isFirst && (
         <>
-          {booking.note && (
-            <div className="absolute top-1 right-1 h-3 w-3 rounded-full bg-primary/80 flex items-center justify-center" title={booking.note}>
-              <span className="text-[6px] text-primary-foreground font-bold">✎</span>
+          {booking.note && booking.note.trim() !== "" && (
+            <div
+              className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm cursor-help"
+              title={booking.note}
+            >
+              <span className="text-[7px] text-primary-foreground font-bold leading-none">📝</span>
             </div>
           )}
           <div className="truncate text-[10px] font-semibold leading-tight pr-3">{booking.customer_name}</div>
