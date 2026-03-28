@@ -116,11 +116,8 @@ function BookingBlock({
       {isFirst && (
         <>
           {booking.note && booking.note.trim() !== "" && (
-            <div
-              className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm cursor-help"
-              title={booking.note}
-            >
-              <span className="text-[7px] text-primary-foreground font-bold leading-none">📝</span>
+            <div className="truncate text-[8px] opacity-80 italic">
+              {booking.note}
             </div>
           )}
           <div className="truncate text-[10px] font-semibold leading-tight pr-3">{booking.customer_name}</div>
