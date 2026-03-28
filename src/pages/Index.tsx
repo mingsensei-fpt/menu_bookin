@@ -77,10 +77,11 @@ const Index = () => {
         <button
           onClick={handleExport}
           disabled={exporting}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground hover:bg-accent transition-colors disabled:opacity-60"
+          className="flex items-center gap-1 rounded-lg border border-border bg-muted px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors disabled:opacity-60"
           title="Export Timeline as PNG"
         >
           {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+          Export
         </button>
         {isLoggedIn ? (
           <button
