@@ -201,24 +201,42 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
       blocks.forEach((block) => {
         const span = parseInt(block.getAttribute("data-span") || "1");
         block.style.height = `${span * EXPORT_ROW - 6}px`;
-        block.style.padding = "8px 10px";
+        block.style.padding = "6px 8px";
         block.style.boxSizing = "border-box";
         block.style.display = "flex";
         block.style.flexDirection = "column";
         block.style.justifyContent = "center";
-        block.style.gap = "3px";
+        block.style.gap = "2px";
         block.style.overflow = "hidden";
-        block.style.whiteSpace = "normal";
         block.style.alignItems = "flex-start";
-        const textLines = block.querySelectorAll<HTMLElement>("div");
-        textLines.forEach((line, index) => {
-          line.style.overflow = "visible";
-          line.style.textOverflow = "clip";
-          line.style.whiteSpace = "nowrap";
-          line.style.lineHeight = index === 0 ? "1.35" : "1.4";
-          line.style.fontSize = index === 0 ? "11px" : "9px";
-          line.style.minHeight = index === 0 ? "15px" : "13px";
-          line.style.display = "block";
+
+        // Fix the name+note row (first div with flex items-baseline)
+        const rows = block.querySelectorAll<HTMLElement>(":scope > div");
+        rows.forEach((row, index) => {
+          row.style.overflow = "visible";
+          row.style.textOverflow = "clip";
+          row.style.whiteSpace = "nowrap";
+          row.style.lineHeight = "1.4";
+          row.style.display = "flex";
+          row.style.alignItems = "baseline";
+          row.style.gap = "4px";
+          row.style.width = "100%";
+
+          if (index === 0) {
+            row.style.fontSize = "11px";
+            row.style.minHeight = "15px";
+          } else {
+            row.style.fontSize = "9px";
+            row.style.minHeight = "12px";
+          }
+
+          // Fix individual spans inside rows
+          const spans = row.querySelectorAll<HTMLElement>("span");
+          spans.forEach((s) => {
+            s.style.overflow = "visible";
+            s.style.textOverflow = "clip";
+            s.style.whiteSpace = "nowrap";
+          });
         });
       });
 
