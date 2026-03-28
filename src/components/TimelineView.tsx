@@ -115,12 +115,14 @@ function BookingBlock({
     >
       {isFirst && (
         <>
-          {booking.note && booking.note.trim() !== "" && (
-            <div className="truncate text-[8px] opacity-80 italic">
-              {booking.note}
-            </div>
-          )}
-          <div className="truncate text-[10px] font-semibold leading-tight">{booking.customer_name}</div>
+          <div className="flex items-baseline gap-1 truncate">
+            <span className="truncate text-[10px] font-semibold leading-tight">{booking.customer_name}</span>
+            {booking.note && booking.note.trim() !== "" && (
+              <span className="shrink-0 rounded px-0.5 text-[8px] font-medium italic bg-yellow-200 text-yellow-900">
+                {booking.note}
+              </span>
+            )}
+          </div>
           <div className="truncate text-[8px] opacity-90">
             {booking.number_of_people}p · {booking.start_time}–{booking.end_time}
           </div>
