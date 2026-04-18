@@ -14,11 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_delete_history: {
+        Row: {
+          booking_id: string
+          deleted_at: string
+          deleted_by_ip: string | null
+          id: string
+        }
+        Insert: {
+          booking_id: string
+          deleted_at?: string
+          deleted_by_ip?: string | null
+          id?: string
+        }
+        Update: {
+          booking_id?: string
+          deleted_at?: string
+          deleted_by_ip?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           created_at: string
           customer_name: string
           date: string
+          del_flg: boolean
           end_time: string
           id: string
           location_id: string | null
@@ -33,6 +55,7 @@ export type Database = {
           created_at?: string
           customer_name: string
           date: string
+          del_flg?: boolean
           end_time: string
           id?: string
           location_id?: string | null
@@ -47,6 +70,7 @@ export type Database = {
           created_at?: string
           customer_name?: string
           date?: string
+          del_flg?: boolean
           end_time?: string
           id?: string
           location_id?: string | null
