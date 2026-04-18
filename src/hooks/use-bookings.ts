@@ -3,19 +3,86 @@ import { Booking, hasConflict } from "@/lib/booking-data";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+export interface DeletedBooking extends Booking {
+  deleted_at: string;
+  deleted_by_ip: string | null;
+  history_id: string;
+}
+
+async function getClientIp(): Promise<string | null> {
+  try {
+    const res = await fetch("https://api.ipify.org?format=json");
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.ip ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function useBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [deletedBookings, setDeletedBookings] = useState<DeletedBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchBookings = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("bookings").select("*");
-    if (error) {
-      console.error("Failed to fetch bookings:", error);
+    // Active bookings (del_flg = false)
+    const activeQuery = supabase
+      .from("bookings")
+      .select("*")
+      .eq("del_flg", false);
+    // Deleted bookings (del_flg = true) joined with history for IP / timestamp
+    const deletedQuery = supabase
+      .from("bookings")
+      .select("*")
+      .eq("del_flg", true);
+    const historyQuery = supabase
+      .from("booking_delete_history")
+      .select("*")
+      .order("deleted_at", { ascending: false });
+
+    const [activeRes, deletedRes, historyRes] = await Promise.all([
+      activeQuery,
+      deletedQuery,
+      historyQuery,
+    ]);
+
+    if (activeRes.error) {
+      console.error("Failed to fetch bookings:", activeRes.error);
       toast.error("Failed to load bookings");
-    } else if (data) {
-      setBookings(data as Booking[]);
+    } else if (activeRes.data) {
+      setBookings(activeRes.data as Booking[]);
     }
+
+    if (deletedRes.error || historyRes.error) {
+      console.error("Failed to fetch deleted bookings:", deletedRes.error || historyRes.error);
+    } else if (deletedRes.data && historyRes.data) {
+      // Latest history entry per booking_id
+      const latestByBooking = new Map<string, { id: string; deleted_at: string; deleted_by_ip: string | null }>();
+      for (const h of historyRes.data as any[]) {
+        if (!latestByBooking.has(h.booking_id)) {
+          latestByBooking.set(h.booking_id, {
+            id: h.id,
+            deleted_at: h.deleted_at,
+            deleted_by_ip: h.deleted_by_ip,
+          });
+        }
+      }
+      const merged: DeletedBooking[] = (deletedRes.data as any[]).map((b) => {
+        const h = latestByBooking.get(b.id);
+        return {
+          ...(b as Booking),
+          deleted_at: h?.deleted_at ?? b.updated_at ?? "",
+          deleted_by_ip: h?.deleted_by_ip ?? null,
+          history_id: h?.id ?? "",
+        };
+      });
+      // Sort by deleted_at desc
+      merged.sort((a, b) => (b.deleted_at || "").localeCompare(a.deleted_at || ""));
+      setDeletedBookings(merged);
+    }
+
     setLoading(false);
   }, []);
 
@@ -25,6 +92,9 @@ export function useBookings() {
     const channel = supabase
       .channel("bookings-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
+        fetchBookings();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "booking_delete_history" }, () => {
         fetchBookings();
       })
       .subscribe();
@@ -60,6 +130,7 @@ export function useBookings() {
         date: booking.date,
         status,
         location_id: booking.location_id || null,
+        del_flg: false,
       } as any);
 
       if (error) {
@@ -78,7 +149,10 @@ export function useBookings() {
   const updateBooking = useCallback(
     async (id: string, updates: Partial<Omit<Booking, "id">>) => {
       const current = bookings.find((b) => b.id === id);
-      if (!current) return { conflict: false };
+      if (!current) {
+        toast.error("Cannot update a deleted booking");
+        return { conflict: false };
+      }
       const merged = { ...current, ...updates };
       const others = bookings.filter((x) => x.id !== id && x.date === merged.date);
       const conflict = hasConflict(merged, others);
@@ -96,7 +170,8 @@ export function useBookings() {
           date: merged.date,
           status,
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("del_flg", false);
 
       if (error) {
         console.error("Failed to update booking:", error);
@@ -112,15 +187,59 @@ export function useBookings() {
   );
 
   const deleteBooking = useCallback(async (id: string) => {
-    const { error } = await supabase.from("bookings").delete().eq("id", id);
-    if (error) {
-      console.error("Failed to delete booking:", error);
-      toast.error("Failed to delete booking: " + error.message);
+    // Soft delete: set del_flg = true and log history entry
+    const ip = await getClientIp();
+
+    const { error: updErr } = await supabase
+      .from("bookings")
+      .update({ del_flg: true } as any)
+      .eq("id", id);
+
+    if (updErr) {
+      console.error("Failed to delete booking:", updErr);
+      toast.error("Failed to delete booking: " + updErr.message);
       return;
     }
+
+    const { error: histErr } = await supabase
+      .from("booking_delete_history")
+      .insert({ booking_id: id, deleted_by_ip: ip } as any);
+
+    if (histErr) {
+      console.error("Failed to log delete history:", histErr);
+      // Non-fatal — booking is already soft-deleted
+    }
+
     toast.success("Booking deleted");
     await fetchBookings();
   }, [fetchBookings]);
 
-  return { bookings, loading, getBookingsForDate, getDatesWithBookings, addBooking, updateBooking, deleteBooking, refetch: fetchBookings };
+  const restoreBooking = useCallback(async (id: string) => {
+    const { error } = await supabase
+      .from("bookings")
+      .update({ del_flg: false } as any)
+      .eq("id", id);
+
+    if (error) {
+      console.error("Failed to restore booking:", error);
+      toast.error("Failed to restore booking: " + error.message);
+      return;
+    }
+
+    toast.success("Booking restored");
+    await fetchBookings();
+  }, [fetchBookings]);
+
+  return {
+    bookings,
+    deletedBookings,
+    loading,
+    getBookingsForDate,
+    getDatesWithBookings,
+    addBooking,
+    updateBooking,
+    deleteBooking,
+    restoreBooking,
+    refetch: fetchBookings,
+  };
 }
