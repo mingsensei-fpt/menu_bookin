@@ -203,63 +203,51 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
         block.style.height = `${span * EXPORT_ROW - 6}px`;
         block.style.padding = "6px 8px";
         block.style.boxSizing = "border-box";
-        block.style.display = "flex";
-        block.style.flexDirection = "column";
-        block.style.justifyContent = "flex-start";
-        block.style.alignItems = "stretch";
-        block.style.gap = "3px";
+        block.style.display = "block";
         block.style.overflow = "hidden";
+        block.style.lineHeight = "1.4";
 
         const innerRows = block.querySelectorAll<HTMLElement>(":scope > div");
         innerRows.forEach((row, index) => {
-          row.style.display = "flex";
-          row.style.alignItems = "center";
-          row.style.gap = "4px";
-          row.style.overflow = "visible";
+          row.style.display = "block";
+          row.style.overflow = "hidden";
           row.style.whiteSpace = "nowrap";
-          row.style.lineHeight = "1.4";
-          row.style.minWidth = "0";
+          row.style.textOverflow = "ellipsis";
           row.style.width = "100%";
+          row.style.marginBottom = "2px";
 
           if (index === 0) {
             row.style.fontSize = "11px";
+            row.style.lineHeight = "16px";
+            row.style.height = "16px";
           } else {
             row.style.fontSize = "9px";
+            row.style.lineHeight = "13px";
+            row.style.height = "13px";
             row.style.opacity = "0.9";
           }
 
           const spans = row.querySelectorAll<HTMLElement>("span");
-          spans.forEach((s) => {
-            s.style.whiteSpace = "nowrap";
-            s.style.verticalAlign = "middle";
-          });
 
-          // First row = name + note: keep both inline on the same baseline
           if (index === 0 && spans.length >= 2) {
-            spans[0].style.flex = "0 1 auto";
-            spans[0].style.minWidth = "0";
-            spans[0].style.overflow = "hidden";
-            spans[0].style.textOverflow = "ellipsis";
-            spans[0].style.display = "inline-block";
+            spans[0].style.display = "inline";
             spans[0].style.fontWeight = "600";
+            spans[0].style.whiteSpace = "nowrap";
+            spans[0].style.marginRight = "6px";
 
-            spans[1].style.flex = "0 0 auto";
-            spans[1].style.display = "inline-flex";
-            spans[1].style.alignItems = "center";
-            spans[1].style.overflow = "visible";
-            spans[1].style.textOverflow = "clip";
-            spans[1].style.padding = "1px 4px";
+            spans[1].style.display = "inline";
+            spans[1].style.padding = "1px 5px";
             spans[1].style.borderRadius = "3px";
             spans[1].style.background = "#fef08a";
             spans[1].style.color = "#713f12";
             spans[1].style.fontSize = "9px";
             spans[1].style.fontStyle = "italic";
-            spans[1].style.lineHeight = "1.2";
+            spans[1].style.fontWeight = "500";
+            spans[1].style.whiteSpace = "nowrap";
           } else {
             spans.forEach((s) => {
-              s.style.overflow = "hidden";
-              s.style.textOverflow = "ellipsis";
-              s.style.display = "inline-block";
+              s.style.display = "inline";
+              s.style.whiteSpace = "nowrap";
             });
           }
         });
