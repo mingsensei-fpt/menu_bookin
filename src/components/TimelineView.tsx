@@ -213,12 +213,13 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
         const innerRows = block.querySelectorAll<HTMLElement>(":scope > div");
         innerRows.forEach((row, index) => {
           row.style.display = "flex";
-          row.style.alignItems = "baseline";
+          row.style.alignItems = "center";
           row.style.gap = "4px";
-          row.style.overflow = "hidden";
+          row.style.overflow = "visible";
           row.style.whiteSpace = "nowrap";
-          row.style.lineHeight = "1.3";
+          row.style.lineHeight = "1.4";
           row.style.minWidth = "0";
+          row.style.width = "100%";
 
           if (index === 0) {
             row.style.fontSize = "11px";
@@ -230,26 +231,36 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
           const spans = row.querySelectorAll<HTMLElement>("span");
           spans.forEach((s) => {
             s.style.whiteSpace = "nowrap";
-            s.style.overflow = "hidden";
-            s.style.textOverflow = "ellipsis";
-            s.style.display = "inline-block";
-            s.style.verticalAlign = "baseline";
+            s.style.verticalAlign = "middle";
           });
 
           // First row = name + note: keep both inline on the same baseline
           if (index === 0 && spans.length >= 2) {
             spans[0].style.flex = "0 1 auto";
-            spans[0].style.maxWidth = "70%";
+            spans[0].style.minWidth = "0";
+            spans[0].style.overflow = "hidden";
+            spans[0].style.textOverflow = "ellipsis";
+            spans[0].style.display = "inline-block";
             spans[0].style.fontWeight = "600";
+
             spans[1].style.flex = "0 0 auto";
+            spans[1].style.display = "inline-flex";
+            spans[1].style.alignItems = "center";
             spans[1].style.overflow = "visible";
             spans[1].style.textOverflow = "clip";
-            spans[1].style.padding = "0 3px";
+            spans[1].style.padding = "1px 4px";
             spans[1].style.borderRadius = "3px";
             spans[1].style.background = "#fef08a";
             spans[1].style.color = "#713f12";
             spans[1].style.fontSize = "9px";
             spans[1].style.fontStyle = "italic";
+            spans[1].style.lineHeight = "1.2";
+          } else {
+            spans.forEach((s) => {
+              s.style.overflow = "hidden";
+              s.style.textOverflow = "ellipsis";
+              s.style.display = "inline-block";
+            });
           }
         });
       });
