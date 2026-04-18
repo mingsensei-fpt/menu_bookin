@@ -151,7 +151,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
   }, []);
 
   const tableCount = tables.length || 1;
-  const rowHeight = `calc((60dvh - ${HEADER_HEIGHT}px) / ${tableCount})`;
+  const rowHeight = `calc((45dvh - ${HEADER_HEIGHT}px) / ${tableCount})`;
 
   const isToday = format(currentTime, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
   const nowMins = currentTime.getHours() * 60 + currentTime.getMinutes();
@@ -295,7 +295,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       )}
-      <div className="overflow-hidden flex-1" style={{ minHeight: "60dvh" }}>
+      <div className="overflow-hidden flex-shrink-0" style={{ height: "45dvh" }}>
         <div ref={scrollRef} className="h-full overflow-x-auto overflow-y-hidden">
           <div ref={timelineRef} className="relative" style={{ minWidth: TABLE_COL_WIDTH + totalWidth }}>
             {/* Time header */}
