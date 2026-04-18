@@ -205,38 +205,52 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
         block.style.boxSizing = "border-box";
         block.style.display = "flex";
         block.style.flexDirection = "column";
-        block.style.justifyContent = "center";
-        block.style.gap = "2px";
+        block.style.justifyContent = "flex-start";
+        block.style.alignItems = "stretch";
+        block.style.gap = "3px";
         block.style.overflow = "hidden";
-        block.style.alignItems = "flex-start";
 
-        // Fix the name+note row (first div with flex items-baseline)
-        const rows = block.querySelectorAll<HTMLElement>(":scope > div");
-        rows.forEach((row, index) => {
-          row.style.overflow = "visible";
-          row.style.textOverflow = "clip";
-          row.style.whiteSpace = "nowrap";
-          row.style.lineHeight = "1.4";
+        const innerRows = block.querySelectorAll<HTMLElement>(":scope > div");
+        innerRows.forEach((row, index) => {
           row.style.display = "flex";
           row.style.alignItems = "baseline";
           row.style.gap = "4px";
-          row.style.width = "100%";
+          row.style.overflow = "hidden";
+          row.style.whiteSpace = "nowrap";
+          row.style.lineHeight = "1.3";
+          row.style.minWidth = "0";
 
           if (index === 0) {
             row.style.fontSize = "11px";
-            row.style.minHeight = "15px";
           } else {
             row.style.fontSize = "9px";
-            row.style.minHeight = "12px";
+            row.style.opacity = "0.9";
           }
 
-          // Fix individual spans inside rows
           const spans = row.querySelectorAll<HTMLElement>("span");
           spans.forEach((s) => {
-            s.style.overflow = "visible";
-            s.style.textOverflow = "clip";
             s.style.whiteSpace = "nowrap";
+            s.style.overflow = "hidden";
+            s.style.textOverflow = "ellipsis";
+            s.style.display = "inline-block";
+            s.style.verticalAlign = "baseline";
           });
+
+          // First row = name + note: keep both inline on the same baseline
+          if (index === 0 && spans.length >= 2) {
+            spans[0].style.flex = "0 1 auto";
+            spans[0].style.maxWidth = "70%";
+            spans[0].style.fontWeight = "600";
+            spans[1].style.flex = "0 0 auto";
+            spans[1].style.overflow = "visible";
+            spans[1].style.textOverflow = "clip";
+            spans[1].style.padding = "0 3px";
+            spans[1].style.borderRadius = "3px";
+            spans[1].style.background = "#fef08a";
+            spans[1].style.color = "#713f12";
+            spans[1].style.fontSize = "9px";
+            spans[1].style.fontStyle = "italic";
+          }
         });
       });
 
