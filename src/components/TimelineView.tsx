@@ -218,7 +218,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
           if (index === 0) {
             row.style.gridTemplateColumns = "minmax(0, 1fr) auto";
             row.style.columnGap = "6px";
-            row.style.alignItems = "center";
+            row.style.alignItems = "baseline";
           }
           // No fixed height + no overflow:hidden on the row itself
           // (parent block already clips). This keeps descenders (g, p, y) intact.
@@ -226,17 +226,17 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
           row.style.whiteSpace = "nowrap";
           row.style.width = "100%";
           row.style.marginBottom = index < innerRows.length - 1 ? "3px" : "0";
-          row.style.padding = "0";
+          row.style.padding = index === 0 ? "2px 0 3px" : "1px 0";
           row.style.height = "auto";
-          row.style.minHeight = index === 0 ? "20px" : "16px";
+          row.style.minHeight = index === 0 ? "24px" : "18px";
 
           if (index === 0) {
             row.style.fontSize = "13px";
-            row.style.lineHeight = "18px";
+            row.style.lineHeight = "20px";
             row.style.fontWeight = "600";
           } else {
             row.style.fontSize = "11px";
-            row.style.lineHeight = "15px";
+            row.style.lineHeight = "16px";
             row.style.opacity = "0.9";
           }
 
@@ -246,11 +246,12 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
             spans[0].style.display = "block";
             spans[0].style.fontWeight = "600";
             spans[0].style.whiteSpace = "nowrap";
-            spans[0].style.lineHeight = "18px";
+            spans[0].style.lineHeight = "20px";
             spans[0].style.overflow = "hidden";
             spans[0].style.textOverflow = "ellipsis";
             spans[0].style.minWidth = "0";
-            spans[0].style.paddingBottom = "2px";
+            spans[0].style.padding = "0 0 2px";
+            spans[0].style.alignSelf = "baseline";
 
             spans[1].style.display = "block";
             spans[1].style.padding = "1px 5px";
@@ -261,13 +262,14 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
             spans[1].style.fontStyle = "italic";
             spans[1].style.fontWeight = "500";
             spans[1].style.whiteSpace = "nowrap";
-            spans[1].style.lineHeight = "16px";
-            spans[1].style.alignSelf = "center";
+            spans[1].style.lineHeight = "18px";
+            spans[1].style.minHeight = "18px";
+            spans[1].style.alignSelf = "baseline";
           } else {
             spans.forEach((s) => {
               s.style.display = "inline";
               s.style.whiteSpace = "nowrap";
-              s.style.lineHeight = index === 0 ? "18px" : "15px";
+              s.style.lineHeight = index === 0 ? "20px" : "16px";
               s.style.verticalAlign = "baseline";
               s.style.overflow = "visible";
               s.style.textOverflow = "clip";
