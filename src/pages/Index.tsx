@@ -44,6 +44,7 @@ const Index = () => {
   const dayBookings = allDayBookings.filter(
     (b) => !selectedLocationId || b.location_id === selectedLocationId
   );
+  const dayDeletedBookings = deletedBookings.filter((b) => b.date === dateStr);
 
   const handleSelectCalendarDate = (d: Date) => {
     setDate(d);
@@ -140,9 +141,9 @@ const Index = () => {
               </TabsTrigger>
               <TabsTrigger value="deleted" className="text-xs relative">
                 Deleted
-                {deletedBookings.length > 0 && (
+                {dayDeletedBookings.length > 0 && (
                   <span className="ml-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
-                    {deletedBookings.length}
+                    {dayDeletedBookings.length}
                   </span>
                 )}
               </TabsTrigger>
@@ -153,7 +154,7 @@ const Index = () => {
           </TabsContent>
           <TabsContent value="deleted" className="mt-0">
             <DeletedBookingsList
-              bookings={deletedBookings}
+              bookings={dayDeletedBookings}
               onRestore={restoreBooking}
               canRestore={isLoggedIn}
             />
