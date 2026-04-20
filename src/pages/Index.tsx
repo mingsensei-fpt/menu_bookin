@@ -44,6 +44,7 @@ const Index = () => {
   const dayBookings = allDayBookings.filter(
     (b) => !selectedLocationId || b.location_id === selectedLocationId
   );
+  const dayDeletedBookings = deletedBookings.filter((b) => b.date === dateStr);
 
   const handleSelectCalendarDate = (d: Date) => {
     setDate(d);
