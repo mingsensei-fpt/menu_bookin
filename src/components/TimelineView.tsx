@@ -115,10 +115,10 @@ function BookingBlock({
     >
       {isFirst && (
         <>
-          <div className="flex items-baseline gap-1 truncate">
+          <div className="flex flex-col gap-0.5 min-w-0">
             <span className="truncate text-[10px] font-semibold leading-tight">{booking.customer_name}</span>
             {booking.note && booking.note.trim() !== "" && (
-              <span className="shrink-0 rounded px-0.5 text-[8px] font-medium italic bg-yellow-200 text-yellow-900">
+              <span className="truncate self-start max-w-full rounded px-0.5 text-[8px] font-medium italic bg-yellow-200 text-yellow-900">
                 {booking.note}
               </span>
             )}
