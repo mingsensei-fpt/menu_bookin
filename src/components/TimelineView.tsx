@@ -392,6 +392,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
             {/* Time header */}
             <div className="sticky top-0 z-20 flex bg-timeline-header border-b border-border" style={{ height: HEADER_HEIGHT }}>
               <div
+                data-table-cell
                 className="sticky left-0 z-10 flex-shrink-0 bg-timeline-header"
                 style={{ width: TABLE_COL_WIDTH }}
               />
@@ -402,6 +403,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
                   return (
                     <div
                       key={slot}
+                      data-header-slot
                       className="flex-shrink-0 flex items-center text-muted-foreground relative border-r border-transparent"
                       style={{ width: SLOT_W }}
                     >
@@ -436,6 +438,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
                   style={{ height: rowHeight }}
                 >
                   <div
+                    data-table-cell
                     className="sticky left-0 z-10 flex flex-shrink-0 flex-col items-center justify-center border-r border-border bg-card"
                     style={{ width: TABLE_COL_WIDTH }}
                   >
