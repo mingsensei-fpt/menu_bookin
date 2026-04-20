@@ -206,11 +206,36 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
 
       // Resize time-header slot cells
       const headerSlotCells = clone.querySelectorAll<HTMLElement>("[data-header-slot]");
-      headerSlotCells.forEach((cell) => { cell.style.width = `${EXPORT_SLOT_W}px`; });
+      headerSlotCells.forEach((cell) => {
+        cell.style.width = `${EXPORT_SLOT_W}px`;
+        cell.style.height = `${EXPORT_HEADER_HEIGHT}px`;
+        const label = cell.querySelector<HTMLElement>("span");
+        if (label) {
+          label.style.fontSize = "20px";
+          label.style.fontWeight = "700";
+        }
+      });
+
+      // Resize the header row container itself
+      const headerRow = clone.querySelector<HTMLElement>(".sticky.top-0");
+      if (headerRow) {
+        headerRow.style.height = `${EXPORT_HEADER_HEIGHT}px`;
+      }
 
       // Resize table-name (left sticky) cells
       const tableNameCells = clone.querySelectorAll<HTMLElement>("[data-table-cell]");
-      tableNameCells.forEach((cell) => { cell.style.width = `${EXPORT_TABLE_COL}px`; });
+      tableNameCells.forEach((cell) => {
+        cell.style.width = `${EXPORT_TABLE_COL}px`;
+        const spans = cell.querySelectorAll<HTMLElement>("span");
+        if (spans[0]) {
+          spans[0].style.fontSize = "22px";
+          spans[0].style.fontWeight = "700";
+        }
+        if (spans[1]) {
+          spans[1].style.fontSize = "16px";
+          spans[1].style.marginTop = "2px";
+        }
+      });
 
       const nowLines = clone.querySelectorAll<HTMLElement>("[data-now-line]");
       nowLines.forEach((line) => line.remove());
