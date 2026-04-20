@@ -186,13 +186,30 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
       clone.style.overflow = "visible";
       clone.style.background = "#ffffff";
 
-      const EXPORT_ROW = 72;
-      const EXPORT_WIDTH = 1600;
-      const EXPORT_HEIGHT = 900;
-      const EXPORT_PADDING_X = 72;
-      const EXPORT_PADDING_Y = 48;
-      const contentWidth = TABLE_COL_WIDTH + totalWidth;
-      const contentHeight = HEADER_HEIGHT + Math.max(tables.length, 1) * EXPORT_ROW;
+      const EXPORT_WIDTH = 1920;
+      const EXPORT_HEIGHT = 1080;
+      const EXPORT_PADDING_X = 32;
+      const EXPORT_PADDING_Y = 32;
+      const tableCountForExport = Math.max(tables.length, 1);
+      const availableWidth = EXPORT_WIDTH - EXPORT_PADDING_X * 2;
+      const availableHeight = EXPORT_HEIGHT - EXPORT_PADDING_Y * 2;
+
+      // Stretch the timeline so it fills the full 16:9 frame both horizontally and vertically.
+      const EXPORT_TABLE_COL = Math.max(64, Math.round(availableWidth * 0.05));
+      const EXPORT_SLOT_W = (availableWidth - EXPORT_TABLE_COL) / TIME_SLOTS.length;
+      const EXPORT_ROW = Math.max(56, Math.floor((availableHeight - HEADER_HEIGHT) / tableCountForExport));
+      const contentWidth = EXPORT_TABLE_COL + EXPORT_SLOT_W * TIME_SLOTS.length;
+      const contentHeight = HEADER_HEIGHT + tableCountForExport * EXPORT_ROW;
+
+      clone.style.width = `${contentWidth}px`;
+
+      // Resize time-header slot cells
+      const headerSlotCells = clone.querySelectorAll<HTMLElement>("[data-header-slot]");
+      headerSlotCells.forEach((cell) => { cell.style.width = `${EXPORT_SLOT_W}px`; });
+
+      // Resize table-name (left sticky) cells
+      const tableNameCells = clone.querySelectorAll<HTMLElement>("[data-table-cell]");
+      tableNameCells.forEach((cell) => { cell.style.width = `${EXPORT_TABLE_COL}px`; });
 
       const nowLines = clone.querySelectorAll<HTMLElement>("[data-now-line]");
       nowLines.forEach((line) => line.remove());
@@ -201,7 +218,10 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
       rows.forEach((row) => { row.style.height = `${EXPORT_ROW}px`; });
 
       const gridCells = clone.querySelectorAll<HTMLElement>("[data-grid-cell]");
-      gridCells.forEach((cell) => { cell.style.height = `${EXPORT_ROW}px`; });
+      gridCells.forEach((cell) => {
+        cell.style.height = `${EXPORT_ROW}px`;
+        cell.style.width = `${EXPORT_SLOT_W}px`;
+      });
 
       const blocks = clone.querySelectorAll<HTMLElement>("[data-block]");
       blocks.forEach((block) => {
@@ -209,6 +229,14 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
         const innerRows = Array.from(block.querySelectorAll<HTMLElement>(":scope > div"));
         const headerSpans = innerRows[0]?.querySelectorAll<HTMLElement>("span") ?? [];
         const hasNote = headerSpans.length > 1;
+
+        // Re-anchor block left/width to the new slot width so blocks line up with the grid.
+        const originalLeft = parseFloat(block.style.left || "0");
+        const originalWidth = parseFloat(block.style.width || "0");
+        const slotsFromOrigin = originalLeft / SLOT_W;
+        const slotsWide = originalWidth / SLOT_W;
+        block.style.left = `${slotsFromOrigin * EXPORT_SLOT_W}px`;
+        block.style.width = `${Math.max(slotsWide * EXPORT_SLOT_W, EXPORT_SLOT_W)}px`;
 
         block.style.height = `${Math.max(span * EXPORT_ROW - 8, hasNote ? 88 : 66)}px`;
         block.style.padding = hasNote ? "9px 10px 10px" : "10px";
@@ -299,14 +327,6 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
         s.style.top = "0";
       });
 
-      const availableWidth = EXPORT_WIDTH - EXPORT_PADDING_X * 2;
-      const availableHeight = EXPORT_HEIGHT - EXPORT_PADDING_Y * 2;
-      const fitScale = Math.min(
-        availableWidth / contentWidth,
-        availableHeight / contentHeight,
-        1.65,
-      );
-
       const exportFrame = document.createElement("div");
       exportFrame.style.position = "absolute";
       exportFrame.style.left = "-9999px";
@@ -316,24 +336,19 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
       exportFrame.style.padding = `${EXPORT_PADDING_Y}px ${EXPORT_PADDING_X}px`;
       exportFrame.style.boxSizing = "border-box";
       exportFrame.style.display = "flex";
-      exportFrame.style.alignItems = "center";
-      exportFrame.style.justifyContent = "center";
+      exportFrame.style.alignItems = "stretch";
+      exportFrame.style.justifyContent = "stretch";
       exportFrame.style.background = "#ffffff";
       exportFrame.style.overflow = "hidden";
-
-      const exportSurface = document.createElement("div");
-      exportSurface.style.position = "relative";
-      exportSurface.style.width = `${contentWidth * fitScale}px`;
-      exportSurface.style.height = `${contentHeight * fitScale}px`;
 
       clone.style.position = "relative";
       clone.style.left = "0";
       clone.style.top = "0";
-      clone.style.transformOrigin = "top left";
-      clone.style.transform = `scale(${fitScale})`;
+      clone.style.width = `${contentWidth}px`;
+      clone.style.height = `${contentHeight}px`;
+      clone.style.transform = "none";
 
-      exportSurface.appendChild(clone);
-      exportFrame.appendChild(exportSurface);
+      exportFrame.appendChild(clone);
       document.body.appendChild(exportFrame);
       await new Promise((r) => setTimeout(r, 200));
 
@@ -377,6 +392,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
             {/* Time header */}
             <div className="sticky top-0 z-20 flex bg-timeline-header border-b border-border" style={{ height: HEADER_HEIGHT }}>
               <div
+                data-table-cell
                 className="sticky left-0 z-10 flex-shrink-0 bg-timeline-header"
                 style={{ width: TABLE_COL_WIDTH }}
               />
@@ -387,6 +403,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
                   return (
                     <div
                       key={slot}
+                      data-header-slot
                       className="flex-shrink-0 flex items-center text-muted-foreground relative border-r border-transparent"
                       style={{ width: SLOT_W }}
                     >
@@ -421,6 +438,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
                   style={{ height: rowHeight }}
                 >
                   <div
+                    data-table-cell
                     className="sticky left-0 z-10 flex flex-shrink-0 flex-col items-center justify-center border-r border-border bg-card"
                     style={{ width: TABLE_COL_WIDTH }}
                   >
