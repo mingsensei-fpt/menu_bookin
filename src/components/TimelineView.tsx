@@ -186,7 +186,13 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
       clone.style.overflow = "visible";
       clone.style.background = "#ffffff";
 
-      const EXPORT_ROW = 64;
+      const EXPORT_ROW = 72;
+      const EXPORT_WIDTH = 1600;
+      const EXPORT_HEIGHT = 900;
+      const EXPORT_PADDING_X = 72;
+      const EXPORT_PADDING_Y = 48;
+      const contentWidth = TABLE_COL_WIDTH + totalWidth;
+      const contentHeight = HEADER_HEIGHT + Math.max(tables.length, 1) * EXPORT_ROW;
 
       const nowLines = clone.querySelectorAll<HTMLElement>("[data-now-line]");
       nowLines.forEach((line) => line.remove());
@@ -200,79 +206,87 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
       const blocks = clone.querySelectorAll<HTMLElement>("[data-block]");
       blocks.forEach((block) => {
         const span = parseInt(block.getAttribute("data-span") || "1");
-        block.style.height = `${span * EXPORT_ROW - 6}px`;
-        block.style.padding = "8px 10px";
+        const innerRows = Array.from(block.querySelectorAll<HTMLElement>(":scope > div"));
+        const headerSpans = innerRows[0]?.querySelectorAll<HTMLElement>("span") ?? [];
+        const hasNote = headerSpans.length > 1;
+
+        block.style.height = `${Math.max(span * EXPORT_ROW - 8, hasNote ? 88 : 66)}px`;
+        block.style.padding = hasNote ? "9px 10px 10px" : "10px";
         block.style.boxSizing = "border-box";
-        block.style.display = "block";
-        block.style.overflow = "visible";
+        block.style.display = "flex";
+        block.style.flexDirection = "column";
+        block.style.justifyContent = "flex-start";
+        block.style.gap = "4px";
+        block.style.overflow = "hidden";
         block.style.fontFamily = "system-ui, -apple-system, sans-serif";
         block.style.border = "none";
         block.style.textAlign = "left";
         block.style.whiteSpace = "normal";
-        // Reset to avoid inherited line-height collapsing descenders
         block.style.lineHeight = "normal";
 
-        const innerRows = block.querySelectorAll<HTMLElement>(":scope > div");
         innerRows.forEach((row, index) => {
-          row.style.display = index === 0 ? "grid" : "block";
+          row.style.display = index === 0 ? "flex" : "block";
           if (index === 0) {
-            row.style.gridTemplateColumns = "minmax(0, 1fr) auto";
-            row.style.columnGap = "6px";
-            row.style.alignItems = "baseline";
+            row.style.flexDirection = "column";
+            row.style.alignItems = "flex-start";
+            row.style.gap = "4px";
           }
-          // No fixed height + no overflow:hidden on the row itself
-          // (parent block already clips). This keeps descenders (g, p, y) intact.
           row.style.overflow = "visible";
-          row.style.whiteSpace = "nowrap";
+          row.style.whiteSpace = "normal";
           row.style.width = "100%";
-          row.style.marginBottom = index < innerRows.length - 1 ? "3px" : "0";
-          row.style.padding = index === 0 ? "2px 0 3px" : "1px 0";
+          row.style.marginBottom = "0";
+          row.style.padding = "0";
           row.style.height = "auto";
-          row.style.minHeight = index === 0 ? "24px" : "18px";
+          row.style.minHeight = "0";
 
           if (index === 0) {
-            row.style.fontSize = "13px";
-            row.style.lineHeight = "20px";
-            row.style.fontWeight = "600";
+            row.style.fontSize = "inherit";
+            row.style.lineHeight = "normal";
+            row.style.fontWeight = "inherit";
           } else {
             row.style.fontSize = "11px";
-            row.style.lineHeight = "16px";
-            row.style.opacity = "0.9";
+            row.style.lineHeight = "17px";
+            row.style.opacity = "0.92";
           }
 
           const spans = row.querySelectorAll<HTMLElement>("span");
 
-          if (index === 0 && spans.length >= 2) {
+          if (index === 0 && spans.length >= 1) {
             spans[0].style.display = "block";
+            spans[0].style.width = "100%";
+            spans[0].style.fontSize = "13px";
             spans[0].style.fontWeight = "600";
             spans[0].style.whiteSpace = "nowrap";
-            spans[0].style.lineHeight = "20px";
+            spans[0].style.lineHeight = "22px";
             spans[0].style.overflow = "hidden";
             spans[0].style.textOverflow = "ellipsis";
             spans[0].style.minWidth = "0";
-            spans[0].style.padding = "0 0 2px";
-            spans[0].style.alignSelf = "baseline";
+            spans[0].style.padding = "0 0 4px";
 
-            spans[1].style.display = "block";
-            spans[1].style.padding = "1px 5px";
-            spans[1].style.borderRadius = "3px";
-            spans[1].style.background = "#fef08a";
-            spans[1].style.color = "#713f12";
-            spans[1].style.fontSize = "10px";
-            spans[1].style.fontStyle = "italic";
-            spans[1].style.fontWeight = "500";
-            spans[1].style.whiteSpace = "nowrap";
-            spans[1].style.lineHeight = "18px";
-            spans[1].style.minHeight = "18px";
-            spans[1].style.alignSelf = "baseline";
+            if (spans[1]) {
+              spans[1].style.display = "inline-flex";
+              spans[1].style.alignItems = "center";
+              spans[1].style.maxWidth = "100%";
+              spans[1].style.padding = "2px 6px 3px";
+              spans[1].style.borderRadius = "4px";
+              spans[1].style.background = "#fef08a";
+              spans[1].style.color = "#713f12";
+              spans[1].style.fontSize = "10px";
+              spans[1].style.fontStyle = "italic";
+              spans[1].style.fontWeight = "500";
+              spans[1].style.whiteSpace = "nowrap";
+              spans[1].style.lineHeight = "16px";
+              spans[1].style.overflow = "hidden";
+              spans[1].style.textOverflow = "ellipsis";
+            }
           } else {
             spans.forEach((s) => {
-              s.style.display = "inline";
+              s.style.display = "block";
               s.style.whiteSpace = "nowrap";
-              s.style.lineHeight = index === 0 ? "20px" : "16px";
-              s.style.verticalAlign = "baseline";
-              s.style.overflow = "visible";
-              s.style.textOverflow = "clip";
+              s.style.lineHeight = "17px";
+              s.style.padding = "0 0 2px";
+              s.style.overflow = "hidden";
+              s.style.textOverflow = "ellipsis";
             });
           }
         });
@@ -285,17 +299,55 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
         s.style.top = "0";
       });
 
-      document.body.appendChild(clone);
+      const availableWidth = EXPORT_WIDTH - EXPORT_PADDING_X * 2;
+      const availableHeight = EXPORT_HEIGHT - EXPORT_PADDING_Y * 2;
+      const fitScale = Math.min(
+        availableWidth / contentWidth,
+        availableHeight / contentHeight,
+        1.65,
+      );
+
+      const exportFrame = document.createElement("div");
+      exportFrame.style.position = "absolute";
+      exportFrame.style.left = "-9999px";
+      exportFrame.style.top = "0";
+      exportFrame.style.width = `${EXPORT_WIDTH}px`;
+      exportFrame.style.height = `${EXPORT_HEIGHT}px`;
+      exportFrame.style.padding = `${EXPORT_PADDING_Y}px ${EXPORT_PADDING_X}px`;
+      exportFrame.style.boxSizing = "border-box";
+      exportFrame.style.display = "flex";
+      exportFrame.style.alignItems = "center";
+      exportFrame.style.justifyContent = "center";
+      exportFrame.style.background = "#ffffff";
+      exportFrame.style.overflow = "hidden";
+
+      const exportSurface = document.createElement("div");
+      exportSurface.style.position = "relative";
+      exportSurface.style.width = `${contentWidth * fitScale}px`;
+      exportSurface.style.height = `${contentHeight * fitScale}px`;
+
+      clone.style.position = "relative";
+      clone.style.left = "0";
+      clone.style.top = "0";
+      clone.style.transformOrigin = "top left";
+      clone.style.transform = `scale(${fitScale})`;
+
+      exportSurface.appendChild(clone);
+      exportFrame.appendChild(exportSurface);
+      document.body.appendChild(exportFrame);
       await new Promise((r) => setTimeout(r, 200));
 
-      const canvas = await html2canvas(clone, {
+      const canvas = await html2canvas(exportFrame, {
         scale: 2,
         backgroundColor: "#ffffff",
         useCORS: true,
-        width: TABLE_COL_WIDTH + totalWidth,
+        width: EXPORT_WIDTH,
+        height: EXPORT_HEIGHT,
+        windowWidth: EXPORT_WIDTH,
+        windowHeight: EXPORT_HEIGHT,
       });
 
-      document.body.removeChild(clone);
+      document.body.removeChild(exportFrame);
 
       const link = document.createElement("a");
       link.download = `timeline-${format(date, "yyyy-MM-dd")}.png`;
