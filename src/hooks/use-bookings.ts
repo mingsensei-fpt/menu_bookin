@@ -116,6 +116,22 @@ export function useBookings() {
   const addBooking = useCallback(
     async (booking: Omit<Booking, "id" | "status"> & { location_id?: string }) => {
       const dateBookings = bookings.filter((b) => b.date === booking.date);
+
+      // Deduplication: prevent identical booking (same name, date, time, tables, location) being created twice
+      const sortedTableIds = [...booking.table_ids].sort().join(",");
+      const duplicate = dateBookings.find(
+        (b) =>
+          b.customer_name.trim().toLowerCase() === booking.customer_name.trim().toLowerCase() &&
+          b.start_time === booking.start_time &&
+          b.end_time === booking.end_time &&
+          (b.location_id || null) === (booking.location_id || null) &&
+          [...b.table_ids].sort().join(",") === sortedTableIds
+      );
+      if (duplicate) {
+        toast.error("Duplicate booking — this booking already exists");
+        return { conflict: false };
+      }
+
       const tempBooking = { ...booking, id: "temp", status: "confirmed" as const };
       const conflict = hasConflict(tempBooking, dateBookings);
       const status = conflict ? "conflict" : "confirmed";

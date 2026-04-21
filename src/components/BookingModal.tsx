@@ -35,6 +35,7 @@ export function BookingModal({ open, onClose, onSave, onDelete, booking, date, t
     note: "",
   });
   const [warning, setWarning] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (booking) {
@@ -60,14 +61,20 @@ export function BookingModal({ open, onClose, onSave, onDelete, booking, date, t
   }, [booking, open, tables]);
 
   const handleSubmit = async () => {
+    if (submitting) return;
     if (!form.customer_name.trim() || form.table_ids.length === 0) return;
-    const endTime = form.end_time || addHours(form.start_time, 2);
-    const data = { ...form, end_time: endTime, date };
-    const result = await onSave(data);
-    if (result && 'conflict' in result && result.conflict) {
-      setWarning(true);
+    setSubmitting(true);
+    try {
+      const endTime = form.end_time || addHours(form.start_time, 2);
+      const data = { ...form, end_time: endTime, date };
+      const result = await onSave(data);
+      if (result && 'conflict' in result && result.conflict) {
+        setWarning(true);
+      }
+      onClose();
+    } finally {
+      setSubmitting(false);
     }
-    onClose();
   };
 
   const toggleTable = (tableId: string) => {
@@ -194,8 +201,8 @@ export function BookingModal({ open, onClose, onSave, onDelete, booking, date, t
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={form.table_ids.length === 0}>
-            {booking ? "Update" : "Create"}
+          <Button onClick={handleSubmit} disabled={form.table_ids.length === 0 || submitting}>
+            {submitting ? (booking ? "Updating..." : "Creating...") : (booking ? "Update" : "Create")}
           </Button>
         </div>
       </DialogContent>
