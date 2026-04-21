@@ -35,6 +35,7 @@ export function BookingModal({ open, onClose, onSave, onDelete, booking, date, t
     note: "",
   });
   const [warning, setWarning] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (booking) {
