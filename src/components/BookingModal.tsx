@@ -201,8 +201,8 @@ export function BookingModal({ open, onClose, onSave, onDelete, booking, date, t
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={form.table_ids.length === 0}>
-            {booking ? "Update" : "Create"}
+          <Button onClick={handleSubmit} disabled={form.table_ids.length === 0 || submitting}>
+            {submitting ? (booking ? "Updating..." : "Creating...") : (booking ? "Update" : "Create")}
           </Button>
         </div>
       </DialogContent>
