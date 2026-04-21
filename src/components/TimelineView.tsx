@@ -190,15 +190,15 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
       const EXPORT_HEIGHT = 1920;
       const EXPORT_PADDING_X = 40;
       const EXPORT_PADDING_Y = 40;
-      const EXPORT_HEADER_HEIGHT = 56;
+      const EXPORT_HEADER_HEIGHT = 88;
       const tableCountForExport = Math.max(tables.length, 1);
       const availableWidth = EXPORT_WIDTH - EXPORT_PADDING_X * 2;
       const availableHeight = EXPORT_HEIGHT - EXPORT_PADDING_Y * 2;
 
       // Stretch the timeline so it fills the full 1:1 square frame both horizontally and vertically.
-      const EXPORT_TABLE_COL = Math.max(96, Math.round(availableWidth * 0.06));
+      const EXPORT_TABLE_COL = Math.max(140, Math.round(availableWidth * 0.08));
       const EXPORT_SLOT_W = (availableWidth - EXPORT_TABLE_COL) / TIME_SLOTS.length;
-      const EXPORT_ROW = Math.max(72, Math.floor((availableHeight - EXPORT_HEADER_HEIGHT) / tableCountForExport));
+      const EXPORT_ROW = Math.max(120, Math.floor((availableHeight - EXPORT_HEADER_HEIGHT) / tableCountForExport));
       const contentWidth = EXPORT_TABLE_COL + EXPORT_SLOT_W * TIME_SLOTS.length;
       const contentHeight = EXPORT_HEADER_HEIGHT + tableCountForExport * EXPORT_ROW;
 
@@ -211,7 +211,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
         cell.style.height = `${EXPORT_HEADER_HEIGHT}px`;
         const label = cell.querySelector<HTMLElement>("span");
         if (label) {
-          label.style.fontSize = "20px";
+          label.style.fontSize = "40px";
           label.style.fontWeight = "700";
         }
       });
@@ -228,12 +228,12 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
         cell.style.width = `${EXPORT_TABLE_COL}px`;
         const spans = cell.querySelectorAll<HTMLElement>("span");
         if (spans[0]) {
-          spans[0].style.fontSize = "22px";
+          spans[0].style.fontSize = "44px";
           spans[0].style.fontWeight = "700";
         }
         if (spans[1]) {
-          spans[1].style.fontSize = "16px";
-          spans[1].style.marginTop = "2px";
+          spans[1].style.fontSize = "32px";
+          spans[1].style.marginTop = "4px";
         }
       });
 
@@ -264,8 +264,8 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
         block.style.left = `${slotsFromOrigin * EXPORT_SLOT_W}px`;
         block.style.width = `${Math.max(slotsWide * EXPORT_SLOT_W, EXPORT_SLOT_W)}px`;
 
-        block.style.height = `${Math.max(span * EXPORT_ROW - 8, hasNote ? 110 : 80)}px`;
-        block.style.padding = hasNote ? "12px 14px 14px" : "14px";
+        block.style.height = `${Math.max(span * EXPORT_ROW - 8, hasNote ? 180 : 130)}px`;
+        block.style.padding = hasNote ? "16px 18px 18px" : "18px";
         block.style.boxSizing = "border-box";
         block.style.display = "flex";
         block.style.flexDirection = "column";
@@ -283,7 +283,7 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
           if (index === 0) {
             row.style.flexDirection = "column";
             row.style.alignItems = "flex-start";
-            row.style.gap = "6px";
+            row.style.gap = "10px";
           }
           row.style.overflow = "visible";
           row.style.whiteSpace = "normal";
@@ -298,8 +298,8 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
             row.style.lineHeight = "normal";
             row.style.fontWeight = "inherit";
           } else {
-            row.style.fontSize = "16px";
-            row.style.lineHeight = "22px";
+            row.style.fontSize = "32px";
+            row.style.lineHeight = "40px";
             row.style.opacity = "0.92";
           }
 
@@ -308,28 +308,28 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
           if (index === 0 && spans.length >= 1) {
             spans[0].style.display = "block";
             spans[0].style.width = "100%";
-            spans[0].style.fontSize = "20px";
+            spans[0].style.fontSize = "40px";
             spans[0].style.fontWeight = "700";
             spans[0].style.whiteSpace = "nowrap";
-            spans[0].style.lineHeight = "28px";
+            spans[0].style.lineHeight = "52px";
             spans[0].style.overflow = "hidden";
             spans[0].style.textOverflow = "ellipsis";
             spans[0].style.minWidth = "0";
-            spans[0].style.padding = "0 0 4px";
+            spans[0].style.padding = "0 0 6px";
 
             if (spans[1]) {
               spans[1].style.display = "inline-flex";
               spans[1].style.alignItems = "center";
               spans[1].style.maxWidth = "100%";
-              spans[1].style.padding = "3px 8px 4px";
-              spans[1].style.borderRadius = "5px";
+              spans[1].style.padding = "5px 12px 6px";
+              spans[1].style.borderRadius = "8px";
               spans[1].style.background = "#fef08a";
               spans[1].style.color = "#713f12";
-              spans[1].style.fontSize = "14px";
+              spans[1].style.fontSize = "28px";
               spans[1].style.fontStyle = "italic";
               spans[1].style.fontWeight = "600";
               spans[1].style.whiteSpace = "nowrap";
-              spans[1].style.lineHeight = "20px";
+              spans[1].style.lineHeight = "36px";
               spans[1].style.overflow = "hidden";
               spans[1].style.textOverflow = "ellipsis";
             }
@@ -337,11 +337,11 @@ export const TimelineView = forwardRef<TimelineViewHandle, TimelineViewProps>(fu
             spans.forEach((s) => {
               s.style.display = "block";
               s.style.whiteSpace = "nowrap";
-              s.style.lineHeight = "22px";
-              s.style.padding = "0 0 2px";
+              s.style.lineHeight = "40px";
+              s.style.padding = "0 0 4px";
               s.style.overflow = "hidden";
               s.style.textOverflow = "ellipsis";
-              s.style.fontSize = "16px";
+              s.style.fontSize = "32px";
               s.style.fontWeight = "500";
             });
           }
