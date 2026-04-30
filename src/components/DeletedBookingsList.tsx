@@ -1,16 +1,18 @@
 import { DeletedBooking } from "@/hooks/use-bookings";
 import { Button } from "@/components/ui/button";
-import { Clock, Users, MapPin, Globe, RotateCcw } from "lucide-react";
+import { Clock, Users, MapPin, Globe, RotateCcw, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useMemo } from "react";
 
 interface DeletedBookingsListProps {
   bookings: DeletedBooking[];
   onRestore: (id: string) => void;
+  onPermanentDelete?: (id: string) => void;
   canRestore: boolean;
+  canPermanentDelete?: boolean;
 }
 
-export function DeletedBookingsList({ bookings, onRestore, canRestore }: DeletedBookingsListProps) {
+export function DeletedBookingsList({ bookings, onRestore, onPermanentDelete, canRestore, canPermanentDelete }: DeletedBookingsListProps) {
   // Sort by deletion time, most recent first.
   const sorted = useMemo(
     () =>
