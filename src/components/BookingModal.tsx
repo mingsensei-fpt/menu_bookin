@@ -125,12 +125,6 @@ export function BookingModal({ open, onClose, onSave, onDelete, onToggleSeal, bo
           </DialogTitle>
         </DialogHeader>
 
-        {readOnly && (
-          <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
-            Booking này đã bị <strong>phong ấn</strong>. Chỉ super admin mới có thể chỉnh sửa hoặc huỷ phong ấn.
-          </div>
-        )}
-
         <div className="grid gap-4 py-2">
           <div>
             <Label htmlFor="name">Customer Name</Label>
