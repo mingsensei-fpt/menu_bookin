@@ -158,7 +158,9 @@ const Index = () => {
             <DeletedBookingsList
               bookings={dayDeletedBookings}
               onRestore={restoreBooking}
+              onPermanentDelete={permanentDeleteBooking}
               canRestore={isLoggedIn}
+              canPermanentDelete={isSuperAdmin}
             />
           </TabsContent>
         </Tabs>
