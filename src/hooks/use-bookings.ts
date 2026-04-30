@@ -246,6 +246,48 @@ export function useBookings() {
     await fetchBookings();
   }, [fetchBookings]);
 
+  // Super-admin only: hard-delete booking + its history rows
+  const permanentDeleteBooking = useCallback(async (id: string) => {
+    // Delete history first (FK-less but conceptually related)
+    const { error: histErr } = await supabase
+      .from("booking_delete_history")
+      .delete()
+      .eq("booking_id", id);
+    if (histErr) {
+      console.error("Failed to delete history:", histErr);
+    }
+    const { error } = await supabase.from("bookings").delete().eq("id", id);
+    if (error) {
+      console.error("Failed to permanently delete booking:", error);
+      toast.error("Failed to permanently delete: " + error.message);
+      return;
+    }
+    toast.success("Booking permanently deleted");
+    await fetchBookings();
+  }, [fetchBookings]);
+
+  // Toggle "sealed" state. Sealing requires admin; un-sealing requires super_admin (enforced by RLS).
+  const toggleSeal = useCallback(
+    async (id: string, seal: boolean, currentUserId: string | null) => {
+      const payload = seal
+        ? { is_sealed: true, sealed_at: new Date().toISOString(), sealed_by: currentUserId }
+        : { is_sealed: false, sealed_at: null, sealed_by: null };
+      const { error } = await supabase
+        .from("bookings")
+        .update(payload as any)
+        .eq("id", id);
+      if (error) {
+        console.error("Failed to toggle seal:", error);
+        toast.error((seal ? "Failed to seal: " : "Failed to unseal: ") + error.message);
+        return false;
+      }
+      toast.success(seal ? "Booking sealed 🔒" : "Booking unsealed 🔓");
+      await fetchBookings();
+      return true;
+    },
+    [fetchBookings]
+  );
+
   return {
     bookings,
     deletedBookings,
@@ -256,6 +298,8 @@ export function useBookings() {
     updateBooking,
     deleteBooking,
     restoreBooking,
+    permanentDeleteBooking,
+    toggleSeal,
     refetch: fetchBookings,
   };
 }
