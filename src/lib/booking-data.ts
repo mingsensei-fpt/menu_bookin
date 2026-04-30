@@ -11,6 +11,9 @@ export interface Booking {
   status: BookingStatus;
   date: string;
   location_id?: string;
+  is_sealed?: boolean;
+  sealed_at?: string | null;
+  sealed_by?: string | null;
 }
 
 export interface Table {
