@@ -1,16 +1,18 @@
 import { DeletedBooking } from "@/hooks/use-bookings";
 import { Button } from "@/components/ui/button";
-import { Clock, Users, MapPin, Globe, RotateCcw } from "lucide-react";
+import { Clock, Users, MapPin, Globe, RotateCcw, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useMemo } from "react";
 
 interface DeletedBookingsListProps {
   bookings: DeletedBooking[];
   onRestore: (id: string) => void;
+  onPermanentDelete?: (id: string) => void;
   canRestore: boolean;
+  canPermanentDelete?: boolean;
 }
 
-export function DeletedBookingsList({ bookings, onRestore, canRestore }: DeletedBookingsListProps) {
+export function DeletedBookingsList({ bookings, onRestore, onPermanentDelete, canRestore, canPermanentDelete }: DeletedBookingsListProps) {
   // Sort by deletion time, most recent first.
   const sorted = useMemo(
     () =>
@@ -42,17 +44,35 @@ export function DeletedBookingsList({ bookings, onRestore, canRestore }: Deleted
             <span className="font-semibold text-sm text-foreground truncate line-through opacity-80">
               {b.customer_name}
             </span>
-            {canRestore && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 px-2 text-xs"
-                onClick={() => onRestore(b.id)}
-              >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                Restore
-              </Button>
-            )}
+            <div className="flex items-center gap-1.5">
+              {canRestore && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => onRestore(b.id)}
+                >
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  Restore
+                </Button>
+              )}
+              {canPermanentDelete && onPermanentDelete && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => {
+                    if (confirm(`Xoá vĩnh viễn booking của "${b.customer_name}"? Hành động này không thể hoàn tác.`)) {
+                      onPermanentDelete(b.id);
+                    }
+                  }}
+                  title="Permanently delete (super admin only)"
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Forever
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">

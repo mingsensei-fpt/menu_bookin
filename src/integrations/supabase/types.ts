@@ -43,9 +43,12 @@ export type Database = {
           del_flg: boolean
           end_time: string
           id: string
+          is_sealed: boolean
           location_id: string | null
           note: string
           number_of_people: number
+          sealed_at: string | null
+          sealed_by: string | null
           start_time: string
           status: Database["public"]["Enums"]["booking_status"]
           table_ids: string[]
@@ -58,9 +61,12 @@ export type Database = {
           del_flg?: boolean
           end_time: string
           id?: string
+          is_sealed?: boolean
           location_id?: string | null
           note?: string
           number_of_people?: number
+          sealed_at?: string | null
+          sealed_by?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["booking_status"]
           table_ids: string[]
@@ -73,9 +79,12 @@ export type Database = {
           del_flg?: boolean
           end_time?: string
           id?: string
+          is_sealed?: boolean
           location_id?: string | null
           note?: string
           number_of_people?: number
+          sealed_at?: string | null
+          sealed_by?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["booking_status"]
           table_ids?: string[]
@@ -147,14 +156,42 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "super_admin"
       booking_status: "confirmed" | "pending" | "conflict"
     }
     CompositeTypes: {
@@ -283,6 +320,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "super_admin"],
       booking_status: ["confirmed", "pending", "conflict"],
     },
   },
